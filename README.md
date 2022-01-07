@@ -32,7 +32,7 @@ colony prvkey: 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
 colonyid: 71f3d0b3bc67d2ddc416cdcc16d6f7612fb06cf3eb5a268ad49198004586fbf2
 ```
 
-### Fibonacci task generator
+## Fibonacci task generator
 
 ```julia
 ...
@@ -105,7 +105,7 @@ Attributes:
 +------------------------------------------------------------------+---------------+-------+------+
 ```
 
-### Fibonacci task solver 
+## Fibonacci task solver 
 
 ```julia
 ...
@@ -132,7 +132,7 @@ julia solver.jl 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
   result: 144
 - add result attribute
 - close process
-```console
+```
 
 ### Look up the process using the Colonies CLI
 ```console
