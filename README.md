@@ -7,6 +7,9 @@ This repo contains a Julia implementation of the [ColonyRuntime API](https://git
 * If there are many solver application, they will compete assigning processes.
 * Example code can be found in [here](https://github.com/colonyos/ColonyRuntime.jl/tree/main/examples/fibonacci)
 
+## Create a colony
+This requires access to a Colonies Server and server private key. Only server owners are allowed to create new Colonies.
+
 ```julia
 server_prvkey = "09545df1812e252a2a853cca29d7eace4a3fe2baad334e3b7141a98d43c31e7b" 
 server = ColonyRuntime.ColoniesServer("localhost", 8080)
