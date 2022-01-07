@@ -1,12 +1,21 @@
-module Colonies
+module ColonyRuntime 
+include("./core.jl")
 include("./rpc.jl")
+include("./Crypto.jl")
+
+import .Crypto
 
 using JSON
 using JSON2
 using HTTP
 using Base64
 
-function addcolony(colony::Colony, prvkey::String) 
+struct ColoniesServer
+  host::String
+  port::Int64
+end
+
+function addcolony(server::ColoniesServer, colony::Colony, prvkey::String) 
   rpcmsg = AddColonyRPC(colony, "addcolonymsg")
   rpcjson = JSON2.write(rpcmsg)
 
@@ -18,7 +27,7 @@ function addcolony(colony::Colony, prvkey::String)
   JSON2.read(payload, Colony)
 end
 
-function addruntime(runtime::Runtime, prvkey::String)
+function addruntime(server::ColoniesServer, runtime::Runtime, prvkey::String)
   rpcmsg = AddRuntimeRPC(runtime, "addruntimemsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -30,7 +39,7 @@ function addruntime(runtime::Runtime, prvkey::String)
   JSON2.read(payload, Runtime)
 end
 
-function approveruntime(runtimeid::String, prvkey::String)
+function approveruntime(server::ColoniesServer, runtimeid::String, prvkey::String)
   rpcmsg = ApproveRuntimeRPC(runtimeid, "approveruntimemsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -41,7 +50,7 @@ function approveruntime(runtimeid::String, prvkey::String)
   sendrpcmsg(rpcmsg)
 end
 
-function submitprocess(spec::ProcessSpec, prvkey::String)
+function submitprocess(server::ColoniesServer, spec::ProcessSpec, prvkey::String)
   rpcmsg = SubmitProcessSpecRPC(spec, "submitprocessespecmsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -53,7 +62,7 @@ function submitprocess(spec::ProcessSpec, prvkey::String)
   JSON2.read(payload, Process)
 end
 
-function getprocess(processid::String, prvkey::String)
+function getprocess(server::ColoniesServer, processid::String, prvkey::String)
   rpcmsg = GetProcessRPC(processid, "getprocessmsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -65,7 +74,7 @@ function getprocess(processid::String, prvkey::String)
   JSON2.read(payload, Process)
 end
 
-function assignprocess(colonyid::String, prvkey::String)
+function assignprocess(server::ColoniesServer, colonyid::String, prvkey::String)
   rpcmsg = AssignProcessRPC(colonyid, "assignprocessmsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -77,7 +86,7 @@ function assignprocess(colonyid::String, prvkey::String)
   JSON2.read(payload, Process)
 end
 
-function addattribute(attribute::Attribute, prvkey::String)
+function addattribute(server::ColoniesServer, attribute::Attribute, prvkey::String)
   rpcmsg = AddAttributeRPC(attribute, "addattributemsg")
   rpcjson = JSON.json(rpcmsg)
 
@@ -89,7 +98,7 @@ function addattribute(attribute::Attribute, prvkey::String)
   JSON2.read(payload, Attribute)
 end
 
-function closeprocess(processid::String, successful::Bool, prvkey::String)
+function closeprocess(server::ColoniesServer, processid::String, successful::Bool, prvkey::String)
   payloadtype = "closesuccessfulmsg"
   rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
   rpcjson = JSON.json(rpcmsg)
