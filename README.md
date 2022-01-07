@@ -1,5 +1,11 @@
-# Introuction
-This repo contains a Julia implementation of the [ColonyRuntime API](https://github.com/colonyos/colonies), making it possible to implement Colony applications.
+# Introduction
+This repo contains a Julia implementation of the [ColonyRuntime API](https://github.com/colonyos/colonies), making it possible to implement Colony applications i Julia.
+
+## Fibonacci example
+* A **generator** application generate pending processes containing a number as an environmental variable. 
+* A **solver** applications is assigned a pending process and execute the process by calculate the fibonacci number of the number. It sets result as an attribute to the process and then close the process.
+* If there are many solver application, they will compete assigning processes.
+* Example code can be found in [here](https://github.com/colonyos/ColonyRuntime.jl/tree/main/examples/fibonacci)
 
 ```julia
 server_prvkey = "09545df1812e252a2a853cca29d7eace4a3fe2baad334e3b7141a98d43c31e7b" 
@@ -23,7 +29,7 @@ colony prvkey: 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
 colonyid: 71f3d0b3bc67d2ddc416cdcc16d6f7612fb06cf3eb5a268ad49198004586fbf2
 ```
 
-## Fibonacci task generator
+### Fibonacci task generator
 
 ```julia
 ...
@@ -96,7 +102,7 @@ Attributes:
 +------------------------------------------------------------------+---------------+-------+------+
 ```
 
-## Fibonacci task solver 
+### Fibonacci task solver 
 
 ```julia
 ...
@@ -112,6 +118,7 @@ ColonyRuntime.addattribute(server, attribute, runtime_prvkey)
 ...
 ```
 
+### Look up the process using the Colonies CLI
 ```console
 julia solver.jl 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
 
@@ -160,3 +167,5 @@ Attributes:
 | 33fe2261bab2db663adf496b4b6170e8c5f48c2b23da6e1289f2f911b5d88f97 | result        |   144 | Out  |
 +------------------------------------------------------------------+---------------+-------+------+
 ```
+
+Note the **result** attribute.
