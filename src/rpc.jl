@@ -1,8 +1,3 @@
-include("./core.jl")
-include("./Crypto.jl")
-
-import .Crypto
-
 struct RPCMsg
   signature::String
   payloadtype::String
