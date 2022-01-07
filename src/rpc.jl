@@ -1,6 +1,6 @@
 include("./core.jl")
-
 include("./Crypto.jl")
+
 import .Crypto
 
 struct RPCMsg
@@ -14,7 +14,47 @@ struct AddColonyRPC
   msgtype::String
 end
 
-function base64encode(msg::String)
+struct AddRuntimeRPC
+  runtime::Runtime
+  msgtype::String
+end
+
+struct ApproveRuntimeRPC
+  runtimeid::String
+  msgtype::String
+end
+
+struct SubmitProcessSpecRPC
+  spec::ProcessSpec
+  msgtype::String
+end
+
+struct GetProcessRPC
+  processid::String
+  msgtype::String
+end
+
+struct AssignProcessRPC
+  colonyid::String
+  msgtype::String
+end
+
+struct AddAttributeRPC
+  attribute::Attribute
+  msgtype::String
+end
+
+struct CloseSuccessfulRPC
+  processid::String
+  msgtype::String
+end
+
+struct CloseFailedRPC
+  processid::String
+  msgtype::String
+end
+
+function base64enc(msg::String)
   io = IOBuffer()
   iob64_encode = Base64EncodePipe(io)
   write(iob64_encode, msg)
@@ -28,7 +68,7 @@ function sendrpcmsg(rpcmsg::RPCMsg)
   try
     r = HTTP.request("POST", url,
                     ["Content-Type" => "plain/text"],
-                    JSON.json(rpcmsg),
+                    JSON2.write(rpcmsg),
                     require_ssl_verification=false)
     body = String(r.body)
     rpcreplymsg = JSON.parse(body)
