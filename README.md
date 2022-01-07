@@ -1,6 +1,9 @@
 # Introuction
 This repo contains a Julia implementation of the [ColonyRuntime API](https://github.com/colonyos/colonies), making it possible to implement Colony applications.
 
+## Create a colony
+This requires access to a Colonies Server and server private key. Only server owners are allowed to create new Colonies.
+
 ```julia
 server_prvkey = "09545df1812e252a2a853cca29d7eace4a3fe2baad334e3b7141a98d43c31e7b" 
 server = ColonyRuntime.ColoniesServer("localhost", 8080)
