@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/colonyos/ColonyRuntime.jl/branch/main/graph/badge.svg?token=EJJ6X2ST2L)](https://codecov.io/gh/colonyos/ColonyRuntime.jl)
+
 # Introduction
 This repo contains a Julia implementation of the [ColonyRuntime API](https://github.com/colonyos/colonies), making it possible to implement Colony applications i Julia.
 
@@ -25,9 +27,7 @@ println("colonyid: ", colonyid)
 
 ```console
 julia create_colony.jl 
-```
-Output:
-```
+
 colony prvkey: 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
 colonyid: 71f3d0b3bc67d2ddc416cdcc16d6f7612fb06cf3eb5a268ad49198004586fbf2
 ```
@@ -40,16 +40,8 @@ colony_prvkey = args[1]
 colonyid = Crypto.id(colony_prvkey)
 server = ColonyRuntime.ColoniesServer("localhost", 8080)
 
-# register a runtime
-runtime_prvkey = Crypto.prvkey()
-runtime = ColonyRuntime.Runtime(Crypto.id(runtime_prvkey), "fibonacci_generator", "fibonacci_generator", colonyid, "AMD Ryzen 9 5950X (32) @ 3  .400GHz", 32, 80326, "NVIDIA GeForce RTX 2080 Ti Rev. A", 1)
-runtime = ColonyRuntime.addruntime(server, runtime, colony_prvkey)
-
-# and approve it so that can use the api
-ColonyRuntime.approveruntime(server, runtime.runtimeid, colony_prvkey)
-
 # submit a process spec
-conditions = ColonyRuntime.Conditions(colonyid, [], "fibonacci_solver", 1, 1024, 0) # 1 core, 1024 Mib memory, no GPU
+conditions = ColonyRuntime.Conditions(colonyid, [], "fibonacci_solver", 1, 1024, 0) # 1 core, 1024 MiB memory, no GPU
 env = Dict()
 env["fibonacci_num"] = args[2]
 processpec = ColonyRuntime.ProcessSpec(-1, -1, conditions, env)
@@ -90,8 +82,8 @@ Requirements:
 | ColonyID       | 71f3d0b3bc67d2ddc416cdcc16d6f7612fb06cf3eb5a268ad49198004586fbf2 |
 | RuntimeIDs     | None                                                             |
 | RuntimeType    | fibonacci_solver                                                 |
-| Memory         | 1                                                                |
-| CPU Cores      | 1024                                                             |
+| Memory         | 1024                                                             |
+| CPU Cores      | 1                                                                |
 | Number of GPUs | 0                                                                |
 | Timeout        | -1                                                               |
 | Max retries    | -1                                                               |
@@ -121,7 +113,6 @@ ColonyRuntime.addattribute(server, attribute, runtime_prvkey)
 ...
 ```
 
-### Look up the process using the Colonies CLI
 ```console
 julia solver.jl 8c062f688d091139d1afabbe62e156d2152a23171b52c6015b73d73f020fe147
 
@@ -155,8 +146,8 @@ Requirements:
 | ColonyID       | 71f3d0b3bc67d2ddc416cdcc16d6f7612fb06cf3eb5a268ad49198004586fbf2 |
 | RuntimeIDs     | None                                                             |
 | RuntimeType    | fibonacci_solver                                                 |
-| Memory         | 1                                                                |
-| CPU Cores      | 1024                                                             |
+| Memory         | 1024                                                             |
+| CPU Cores      | 1                                                                |
 | Number of GPUs | 0                                                                |
 | Timeout        | -1                                                               |
 | Max retries    | -1                                                               |
