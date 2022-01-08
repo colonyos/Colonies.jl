@@ -1,0 +1,5 @@
+*.swp
+examples/*.sw*
+examples/fibonacci/*.sw*
+src/*.sw*
+test/*.sw*
