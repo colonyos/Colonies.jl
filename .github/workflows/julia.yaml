@@ -40,8 +40,5 @@ jobs:
     - name: Set up Julia 
       uses: julia-actions/setup-julia@v1
     
-    - name: Install libc6 
-      run: sudo apt install libc6
-
     - name: Test
       run: make github_test
