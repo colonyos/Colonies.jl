@@ -102,7 +102,9 @@ function closeprocess(server::ColoniesServer, processid::String, successful::Boo
   payloadtype = "closesuccessfulmsg"
   rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
   rpcjson = JSON.json(rpcmsg)
-  
+ 
+  print("hejopp")
+
   if !successful
     payloadtype = "closefailedmsg"
     rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
