@@ -1,6 +1,4 @@
-[![codecov](https://codecov.io/gh/colonyos/ColonyRuntime.jl/branch/main/graph/badge.svg?token=EJJ6X2ST2L)](https://codecov.io/gh/colonyos/ColonyRuntime.jl)
-
-[![Julia](https://github.com/colonyos/ColonyRuntime.jl/actions/workflows/julia.yaml/badge.svg)](https://github.com/colonyos/ColonyRuntime.jl/actions/workflows/julia.yaml)
+[![codecov](https://codecov.io/gh/colonyos/ColonyRuntime.jl/branch/main/graph/badge.svg?token=EJJ6X2ST2L)](https://codecov.io/gh/colonyos/ColonyRuntime.jl)[![Julia](https://github.com/colonyos/ColonyRuntime.jl/actions/workflows/julia.yaml/badge.svg)](https://github.com/colonyos/ColonyRuntime.jl/actions/workflows/julia.yaml)
 
 # Introduction
 This repo contains a Julia implementation of the [ColonyRuntime API](https://github.com/colonyos/colonies), making it possible to implement Colony applications i Julia.
