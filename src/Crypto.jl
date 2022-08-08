@@ -5,7 +5,7 @@ using Pkg
 # TODO
 #  Warning: `Pkg.dir(pkgname, paths...)` is deprecated; instead, do `import ColonyRuntime; joinpath(dirname(pathof(ColonyRuntime)), "..", paths.
 #  But, pathof just say LoadError: UndefVarError: ColonyRuntime not defined
-crypto_lib_path = Pkg.dir("ColonyRuntime") * "lib/cryptolib.so"
+crypto_lib_path = Pkg.dir("ColonyRuntime") * "lib/libcryptolib.so"
 
 function prvkey()
   prvkey_cstr = ccall((:prvkey, crypto_lib_path), Cstring, ())
