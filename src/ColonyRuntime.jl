@@ -1,119 +1,131 @@
-module ColonyRuntime 
+module ColonyRuntime
 include("./core.jl")
+include("./json.jl")
 include("./rpc.jl")
 include("./Crypto.jl")
 
 import .Crypto
 
-using JSON
-using JSON2
 using HTTP
 using Base64
 
-struct ColoniesServer
-  host::String
-  port::Int64
+struct ColoniesClient
+    protocol::String
+    host::String
+    port::Int64
 end
 
-function addcolony(server::ColoniesServer, colony::Colony, prvkey::String) 
-  rpcmsg = AddColonyRPC(colony, "addcolonymsg")
-  rpcjson = JSON2.write(rpcmsg)
+function addcolony(client::ColoniesClient, colony::Colony, prvkey::String)
+    rpcmsg = AddColonyRPC(colony, "addcolonymsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "addcolonymsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addcolonymsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Colony)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Colony)
 end
 
-function addruntime(server::ColoniesServer, runtime::Runtime, prvkey::String)
-  rpcmsg = AddRuntimeRPC(runtime, "addruntimemsg")
-  rpcjson = JSON.json(rpcmsg)
+function addruntime(client::ColoniesClient, runtime::Runtime, prvkey::String)
+    rpcmsg = AddRuntimeRPC(runtime, "addruntimemsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "addruntimemsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addruntimemsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Runtime)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Runtime)
 end
 
-function approveruntime(server::ColoniesServer, runtimeid::String, prvkey::String)
-  rpcmsg = ApproveRuntimeRPC(runtimeid, "approveruntimemsg")
-  rpcjson = JSON.json(rpcmsg)
+function approveruntime(client::ColoniesClient, runtimeid::String, prvkey::String)
+    rpcmsg = ApproveRuntimeRPC(runtimeid, "approveruntimemsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "approveruntimemsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "approveruntimemsg", payload)
 
-  sendrpcmsg(rpcmsg)
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
 end
 
-function submitprocess(server::ColoniesServer, spec::ProcessSpec, prvkey::String)
-  rpcmsg = SubmitProcessSpecRPC(spec, "submitprocessespecmsg")
-  rpcjson = JSON.json(rpcmsg)
+function submitprocess(client::ColoniesClient, spec::ProcessSpec, prvkey::String)
+    rpcmsg = SubmitProcessSpecRPC(spec, "submitprocessespecmsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "submitprocessespecmsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "submitprocessespecmsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Process)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Process)
 end
 
-function getprocess(server::ColoniesServer, processid::String, prvkey::String)
-  rpcmsg = GetProcessRPC(processid, "getprocessmsg")
-  rpcjson = JSON.json(rpcmsg)
+function getprocess(client::ColoniesClient, processid::String, prvkey::String)
+    rpcmsg = GetProcessRPC(processid, "getprocessmsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "getprocessmsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getprocessmsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Process)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Process)
 end
 
-function assignprocess(server::ColoniesServer, colonyid::String, prvkey::String)
-  rpcmsg = AssignProcessRPC(colonyid, "assignprocessmsg")
-  rpcjson = JSON.json(rpcmsg)
+function getprocesses(client::ColoniesClient, colonyid::String, state::Int64, count::Int64, prvkey::String)
+    rpcmsg = GetProcessesRPC(colonyid, state, count, "getprocessesmsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "assignprocessmsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getprocessesmsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Process)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, AbstractArray{Process})
 end
 
-function addattribute(server::ColoniesServer, attribute::Attribute, prvkey::String)
-  rpcmsg = AddAttributeRPC(attribute, "addattributemsg")
-  rpcjson = JSON.json(rpcmsg)
+function assignprocess(client::ColoniesClient, colonyid::String, timeout::Int64, prvkey::String)
+    rpcmsg = AssignProcessRPC(colonyid, false, timeout, "assignprocessmsg")
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, "addattributemsg", payload)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "assignprocessmsg", payload)
 
-  payload, payloadtype = sendrpcmsg(rpcmsg)
-  JSON2.read(payload, Attribute)
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Process)
 end
 
-function closeprocess(server::ColoniesServer, processid::String, successful::Bool, prvkey::String)
-  payloadtype = "closesuccessfulmsg"
-  rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
-  rpcjson = JSON.json(rpcmsg)
-  
-  if !successful
-    payloadtype = "closefailedmsg"
+function addattribute(client::ColoniesClient, attribute::Attribute, prvkey::String)
+    rpcmsg = AddAttributeRPC(attribute, "addattributemsg")
+    rpcjson = marshaljson(rpcmsg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addattributemsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Attribute)
+end
+
+function closeprocess(client::ColoniesClient, processid::String, successful::Bool, prvkey::String)
+    payloadtype = "closesuccessfulmsg"
     rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
-    rpcjson = JSON.json(rpcmsg)
-  end
+    rpcjson = marshaljson(rpcmsg)
 
-  payload = base64enc(rpcjson)
-  sig = Crypto.sign(payload, prvkey)
-  rpcmsg = RPCMsg(sig, payloadtype, payload)
+    if !successful
+        payloadtype = "closefailedmsg"
+        rpcmsg = CloseSuccessfulRPC(processid, payloadtype)
+        rpcjson = marshaljson(rpcmsg)
+    end
 
-  sendrpcmsg(rpcmsg)
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, payloadtype, payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
 end
 
 end
