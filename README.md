@@ -33,7 +33,6 @@ julia create_colony.jl
 
 Output:
 ```console
-  Activating project at `~/dev/github/colonyos/ColonyRuntime.jl`
 colony prvkey: 8449d00c8b128700904f2ae0cdbf7c025cb42cd920487798adeacb06f0216a3e
 colonyid: f79dab605840c81a1d6d871f2964ed43120a13c218d04a06205f704e274af2ee
 ColonyRuntime.Colony("f79dab605840c81a1d6d871f2964ed43120a13c218d04a06205f704e274af2ee", "my_colony")
@@ -57,7 +56,6 @@ julia generator.jl 12                                                          1
 
 Output:
 ```console
-  Activating project at `~/dev/github/colonyos/ColonyRuntime.jl`
 - registering a new runtime to colony 4787a5071856a4acf702b2ffcea422e3237a679c681314113d86139461290cf4
   runtime_prvkey: 4354efffdc4a2bfb304121aecbdbaa9a51be91b6c2608ebc0321b727fe225830
   runtimeid: 3a76f43bfecf6d9168c29c43101e35e2d31799720eae6e57330fa98890b6cdb9
@@ -87,7 +85,6 @@ julia solver.jl
 
 Output:
 ```console
-  Activating project at `~/dev/github/colonyos/ColonyRuntime.jl`
 - registering a new runtime to colony 4787a5071856a4acf702b2ffcea422e3237a679c681314113d86139461290cf4
 - approving runtime 6b6c186cfd9be0c7d6fbefa121e21aeeea1f1a95853d6eaf170ac2549390dfb7
 - assign process
