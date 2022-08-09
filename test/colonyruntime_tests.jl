@@ -14,7 +14,6 @@ global server_prvkey = "fcc79953d8a751bf41db661592dc34d30004b1a651ffa0725b03ac22
 
 client = ColonyRuntime.ColoniesClient("http", "localhost", 50080)
 
-
 function create_test_colony(client::ColonyRuntime.ColoniesClient, server_prvkey::String)
     colony_prvkey = Crypto.prvkey()
     colonyid = Crypto.id(colony_prvkey)
@@ -23,7 +22,6 @@ function create_test_colony(client::ColonyRuntime.ColoniesClient, server_prvkey:
 
     colony_prvkey, colony.colonyid
 end
-
 
 function create_test_runtime(client::ColonyRuntime.ColoniesClient, colonyid::String, colony_prvkey::String)
     name = randstring(12)

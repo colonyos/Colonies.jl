@@ -6,20 +6,19 @@ Pkg.activate("../..")
 using ColonyRuntime
 using ColonyRuntime.Crypto
 
-function main(args)
-  server_prvkey = args[1]
-  println("server_prvkey: ", server_prvkey)
+function main()
+    server_prvkey = "fcc79953d8a751bf41db661592dc34d30004b1a651ffa0725b03ac227641499d"
+    colony_prvkey = Crypto.prvkey()
+    colonyid = Crypto.id(colony_prvkey)
 
-  colony_prvkey = Crypto.prvkey()
-  colonyid = Crypto.id(colony_prvkey)
+    println("colony prvkey: ", colony_prvkey)
+    println("colonyid: ", colonyid)
 
-  println("colony prvkey: ", colony_prvkey)
-  println("colonyid: ", colonyid)
+    client = ColonyRuntime.ColoniesClient("http", "localhost", 50080)
 
-  server = ColonyRuntime.ColoniesServer("localhost", 8080)
-
-  colony = ColonyRuntime.Colony(colonyid, "my_colony")
-  ColonyRuntime.addcolony(server, colony, server_prvkey)
+    colony = ColonyRuntime.Colony(colonyid, "my_colony")
+    addedcolony = ColonyRuntime.addcolony(client, colony, server_prvkey)
+    println(addedcolony)
 end
 
-main(ARGS)
+main()
