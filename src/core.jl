@@ -17,33 +17,40 @@ Base.@kwdef struct Colony
     name::String
 end
 
-Base.@kwdef struct Runtime
-    runtimeid::String
-    runtimetype::String
+Base.@kwdef struct Location
+    long::Float64
+    lat::Float64
+end
+
+Base.@kwdef struct Function
     name::String
+    args::Union{Array{String,1},Nothing}
+end
+
+Base.@kwdef struct Executor 
+    executorid::String
+    executortype::String
+    executorname::String
     colonyid::String
-    cpu::String
-    cores::Int64
-    mem::Int64
-    gpu::String
-    gpus::Int64
     state::Int64
     commissiontime::String
     lastheardfromtime::String
+    location::Location
+    functions::Union{Array{Function,1},Nothing}
 
-    function Runtime(runtimeid::String, runtimetype::String, name::String, colonyid::String, cpu::String, cores::Int64, mem::Int64, gpu::String, gpus::Int64, state::Int64)
-        new(runtimeid, runtimetype, name, colonyid, cpu, cores, mem, gpu, gpus, state, "2022-08-08T10:22:25.819199495+02:00", "2022-08-08T10:22:25.819199495+02:00")
+    function Executor(executorid::String, executortype::String, executorname::String, colonyid::String, state::Int64)
+        new(executorid, executortype, executorname, colonyid, state, "2022-08-08T10:22:25.819199495+02:00", "2022-08-08T10:22:25.819199495+02:00", Colonies.Location(0.0, 0.0), [])
     end
 
-    function Runtime(runtimeid::String, runtimetype::String, name::String, colonyid::String, cpu::String, cores::Int64, mem::Int64, gpu::String, gpus::Int64, state::Int64, commissiontime::String, lastheardfromtime::String)
-        new(runtimeid, runtimetype, name, colonyid, cpu, cores, mem, gpu, gpus, state, commissiontime, lastheardfromtime)
+    function Executor(executorid::String, executortype::String, executorname::String, colonyid::String, state::Int64, commissiontime::String, lastheardfromtime::String, location::Location, functions::Array{Function,1})
+        new(executorid, executortype, executorname, colonyid, state, commissiontime, lastheardfromtime, location, functions)
     end
 end
 
 Base.@kwdef struct Conditions
     colonyid::String
-    runtimeids::Union{Array{String,1},Nothing}
-    runtimetype::String
+    executorids::Union{Array{String,1},Nothing}
+    executortype::String
     dependencies::Union{Array{String,1},Nothing} = []
 end
 
@@ -83,7 +90,7 @@ end
 
 Base.@kwdef struct Process
     processid::String
-    assignedruntimeid::String
+    assignedexecutorid::String
     isassigned::Bool
     state::UInt16
     submissiontime::String
@@ -91,7 +98,6 @@ Base.@kwdef struct Process
     endtime::String
     waitdeadline::String
     execdeadline::String
-    errormsg::String
     retries::UInt16
     attributes::Union{Array{Attribute,1},Nothing} = []
     spec::ProcessSpec
@@ -99,6 +105,9 @@ Base.@kwdef struct Process
     parents::Union{Array{String,1},Nothing} = []
     children::Union{Array{String,1},Nothing} = []
     processgraphid::String = ""
+    in::Union{Array{String,1},Nothing} = []
+    out::Union{Array{String,1},Nothing} = []
+    errors::Union{Array{String,1},Nothing} = []
 end
 
 function get_attr_value(process::Process, key::String)
