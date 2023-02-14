@@ -3,8 +3,8 @@ using Test
 
 Pkg.activate("../..")
 
-using ColonyRuntime
-using ColonyRuntime.Crypto
+using Colonies
+using Colonies.Crypto
 
 function main()
     server_prvkey = "fcc79953d8a751bf41db661592dc34d30004b1a651ffa0725b03ac227641499d"
@@ -14,10 +14,10 @@ function main()
     println("colony prvkey: ", colony_prvkey)
     println("colonyid: ", colonyid)
 
-    client = ColonyRuntime.ColoniesClient("http", "localhost", 50080)
+    client = Colonies.ColoniesClient("http", "localhost", 50080)
 
-    colony = ColonyRuntime.Colony(colonyid, "my_colony")
-    addedcolony = ColonyRuntime.addcolony(client, colony, server_prvkey)
+    colony = Colonies.Colony(colonyid, "my_colony")
+    addedcolony = Colonies.addcolony(client, colony, server_prvkey)
     println(addedcolony)
 end
 

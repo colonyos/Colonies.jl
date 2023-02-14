@@ -9,17 +9,24 @@ struct AddColonyRPC
     msgtype::String
 end
 
-struct AddRuntimeRPC
-    runtime::Runtime
+struct AddExecutorRPC
+    executor::Executor
     msgtype::String
 end
 
-struct ApproveRuntimeRPC
-    runtimeid::String
+struct ApproveExecutorRPC
+    executorid::String
     msgtype::String
 end
 
 struct SubmitProcessSpecRPC
+    spec::ProcessSpec
+    msgtype::String
+end
+
+struct AddChildRPC
+    processgraphid::String
+    processid::String
     spec::ProcessSpec
     msgtype::String
 end
@@ -51,11 +58,18 @@ end
 struct CloseSuccessfulRPC
     processid::String
     msgtype::String
+    out::Vector{String}
 end
 
 struct CloseFailedRPC
     processid::String
     msgtype::String
+    errors::Vector{String}
+end
+
+Base.@kwdef mutable struct ColoniesError <: Exception
+    status::Int64
+    message::String
 end
 
 function base64enc(msg::String)
@@ -73,21 +87,22 @@ function sendrpcmsg(rpcmsg::RPCMsg, protocol::String, host::String, port::Int64)
         r = HTTP.request("POST", url,
             ["Content-Type" => "plain/text"],
             marshaljson(rpcmsg),
+            retry_non_idempotent=false,
+            retry=false,
             require_ssl_verification=false)
         body = String(r.body)
         rpcreplymsg = unmarshaljson2dict(body)
         payload = String(base64decode(rpcreplymsg["payload"]))
         return payload, rpcreplymsg["payloadtype"]
     catch err
-        if isa(err, HTTP.ConnectError)
-            @error err
-            Base.error(err)
-        else
+        if isa(err, HTTP.ExceptionRequest.StatusError)
             rpcreplymsg = unmarshaljson2dict(String(err.response.body))
             payload = String(base64decode(rpcreplymsg["payload"]))
             failure_msg = unmarshaljson2dict(payload)
-            @error failure_msg["message"]
-            Base.error(failure_msg["message"])
+            throw(ColoniesError(failure_msg["message"], failure_msg["status"]))
+        else
+            @error err
+            throw(err)
         end
     end
 end
