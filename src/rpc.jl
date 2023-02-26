@@ -14,20 +14,25 @@ struct AddExecutorRPC
     msgtype::String
 end
 
+struct AddFunctionRPC
+    fun::Function
+    msgtype::String
+end
+
 struct ApproveExecutorRPC
     executorid::String
     msgtype::String
 end
 
-struct SubmitFuncSpecRPC
-    spec::FuncSpec
+struct SubmitFunctionSpecRPC
+    spec::FunctionSpec
     msgtype::String
 end
 
 struct AddChildRPC
     processgraphid::String
     processid::String
-    spec::FuncSpec
+    spec::FunctionSpec
     msgtype::String
 end
 

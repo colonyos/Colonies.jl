@@ -23,8 +23,27 @@ Base.@kwdef struct Location
 end
 
 Base.@kwdef struct Function
-    name::String
-    args::Union{Array{String,1},Nothing}
+    functionid::String
+    executorid::String
+    colonyid::String
+    funcname::String
+    desc::String
+    counter::Int64
+    minwaittime::Float64
+    maxwaittime::Float64
+    minexectime::Float64
+    maxexectime::Float64
+    avgwaittime::Float64
+    avgexectime::Float64
+    args::Array{String,1}
+
+    function Function(executorid, colonyid, funcname, desc, args)
+        new("", executorid, colonyid, funcname, desc, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, args)
+    end
+
+    function Function(functionid, executorid, colonyid, funcname, desc, counter, minwaittime, maxwaittime, minexectime, maxexectime, avgwaittime, avgexectime, args)
+        new(functionid, executorid, colonyid, funcname, desc, counter, minwaittime, maxwaittime, minexectime, maxexectime, avgwaittime, avgexectime, args)
+    end
 end
 
 Base.@kwdef struct Executor
@@ -54,7 +73,7 @@ Base.@kwdef struct Conditions
     dependencies::Union{Array{String,1},Nothing} = []
 end
 
-Base.@kwdef struct FuncSpec
+Base.@kwdef struct FunctionSpec
     nodename::String
     funcname::String
     args::Union{Array{String,1},Nothing} = []
@@ -67,8 +86,8 @@ Base.@kwdef struct FuncSpec
     label::String
     env::Dict{String,String}
 
-    function FuncSpec(name, func, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
-        new(name, func, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
+    function FunctionSpec(name, funcname, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
+        new(name, funcname, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
     end
 end
 
@@ -102,7 +121,7 @@ Base.@kwdef struct Process
     execdeadline::String
     retries::UInt16
     attributes::Union{Array{Attribute,1},Nothing} = []
-    spec::FuncSpec
+    spec::FunctionSpec
     waitforparents::Bool
     parents::Union{Array{String,1},Nothing} = []
     children::Union{Array{String,1},Nothing} = []

@@ -96,11 +96,21 @@ function test_submit()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     # we don't bother testing all process attrbiutes, at least the process was assing a 64 chars process id
     length(added_process.processid) == 64
+end
+
+function test_func()
+    colony_prvkey, colonyid = create_test_colony(client, server_prvkey)
+    executor_prvkey, executor = create_test_executor(client, colonyid, colony_prvkey)
+
+    func = Colonies.Function(executor.executorid, colonyid, "testfunc", "testdesc", [])
+    added_function = Colonies.addfunction(client, func, executor_prvkey)
+
+    length(added_function.functionid) == 64
 end
 
 function test_getprocess()
@@ -110,7 +120,7 @@ function test_getprocess()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     process_from_server = Colonies.getprocess(client, added_process.processid, executor_prvkey)
@@ -124,7 +134,7 @@ function test_getprocesses()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     Colonies.submit(client, processpec, executor_prvkey)
     Colonies.submit(client, processpec, executor_prvkey)
 
@@ -139,7 +149,7 @@ function test_assign()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)  # wait max 10 seconds for an assignment
@@ -157,7 +167,7 @@ function test_addattribute()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
@@ -176,7 +186,7 @@ function test_closeprocess_successful()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
@@ -198,7 +208,7 @@ function test_closeprocess_failed()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    processpec = Colonies.FunctionSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
     added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
@@ -227,6 +237,7 @@ end
         @test test_addattribute()
         @test test_closeprocess_successful()
         @test test_closeprocess_failed()
+        @test test_func()
     catch err
         typeof(err) == InterruptException && rethrow(err)
         print(err)
