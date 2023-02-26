@@ -51,19 +51,19 @@ function approveexecutor(client::ColoniesClient, executorid::String, prvkey::Str
     sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
 end
 
-function submitprocess(client::ColoniesClient, spec::ProcessSpec, prvkey::String)
-    rpcmsg = SubmitProcessSpecRPC(spec, "submitprocessespecmsg")
+function submit(client::ColoniesClient, spec::FuncSpec, prvkey::String)
+    rpcmsg = SubmitFuncSpecRPC(spec, "submitfuncspecmsg")
     rpcjson = marshaljson(rpcmsg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
-    rpcmsg = RPCMsg(sig, "submitprocessespecmsg", payload)
+    rpcmsg = RPCMsg(sig, "submitfuncspecmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
     unmarshaljson(payload, Process)
 end
 
-function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::ProcessSpec, prvkey::String)
+function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FuncSpec, prvkey::String)
     rpcmsg = AddChildRPC(processgraphid, processid, spec, "addchildmsg")
     rpcjson = marshaljson(rpcmsg)
 
@@ -99,7 +99,7 @@ function getprocesses(client::ColoniesClient, colonyid::String, state::Int64, co
     unmarshaljson(payload, AbstractArray{Process})
 end
 
-function assignprocess(client::ColoniesClient, colonyid::String, timeout::Int64, prvkey::String)
+function assign(client::ColoniesClient, colonyid::String, timeout::Int64, prvkey::String)
     rpcmsg = AssignProcessRPC(colonyid, false, timeout, "assignprocessmsg")
     rpcjson = marshaljson(rpcmsg)
 

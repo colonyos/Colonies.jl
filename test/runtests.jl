@@ -4,4 +4,4 @@ Pkg.activate("..")
 Pkg.instantiate()
 
 include("crypto_tests.jl")
-include("colonyruntime_tests.jl")
+include("colonies_tests.jl")

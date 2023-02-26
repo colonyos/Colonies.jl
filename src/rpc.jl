@@ -19,15 +19,15 @@ struct ApproveExecutorRPC
     msgtype::String
 end
 
-struct SubmitProcessSpecRPC
-    spec::ProcessSpec
+struct SubmitFuncSpecRPC
+    spec::FuncSpec
     msgtype::String
 end
 
 struct AddChildRPC
     processgraphid::String
     processid::String
-    spec::ProcessSpec
+    spec::FuncSpec
     msgtype::String
 end
 
@@ -68,8 +68,8 @@ struct CloseFailedRPC
 end
 
 Base.@kwdef mutable struct ColoniesError <: Exception
-    status::Int64
     message::String
+    status::Int64
 end
 
 function base64enc(msg::String)
@@ -95,7 +95,7 @@ function sendrpcmsg(rpcmsg::RPCMsg, protocol::String, host::String, port::Int64)
         payload = String(base64decode(rpcreplymsg["payload"]))
         return payload, rpcreplymsg["payloadtype"]
     catch err
-        if isa(err, HTTP.ExceptionRequest.StatusError)
+        if isa(err, HTTP.Exceptions.StatusError)
             rpcreplymsg = unmarshaljson2dict(String(err.response.body))
             payload = String(base64decode(rpcreplymsg["payload"]))
             failure_msg = unmarshaljson2dict(payload)

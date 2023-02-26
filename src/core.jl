@@ -27,23 +27,23 @@ Base.@kwdef struct Function
     args::Union{Array{String,1},Nothing}
 end
 
-Base.@kwdef struct Executor 
+Base.@kwdef struct Executor
     executorid::String
     executortype::String
     executorname::String
     colonyid::String
     state::Int64
+    requirefuncreg::Bool
     commissiontime::String
     lastheardfromtime::String
     location::Location
-    functions::Union{Array{Function,1},Nothing}
 
     function Executor(executorid::String, executortype::String, executorname::String, colonyid::String, state::Int64)
-        new(executorid, executortype, executorname, colonyid, state, "2022-08-08T10:22:25.819199495+02:00", "2022-08-08T10:22:25.819199495+02:00", Colonies.Location(0.0, 0.0), [])
+        new(executorid, executortype, executorname, colonyid, state, false, "2022-08-08T10:22:25.819199495+02:00", "2022-08-08T10:22:25.819199495+02:00", Colonies.Location(0.0, 0.0))
     end
 
-    function Executor(executorid::String, executortype::String, executorname::String, colonyid::String, state::Int64, commissiontime::String, lastheardfromtime::String, location::Location, functions::Array{Function,1})
-        new(executorid, executortype, executorname, colonyid, state, commissiontime, lastheardfromtime, location, functions)
+    function Executor(executorid::String, executortype::String, executorname::String, colonyid::String, state::Int64, requirefuncreg::Bool, commissiontime::String, lastheardfromtime::String, location::Location)
+        new(executorid, executortype, executorname, colonyid, state, requirefuncreg, commissiontime, lastheardfromtime, location)
     end
 end
 
@@ -54,19 +54,21 @@ Base.@kwdef struct Conditions
     dependencies::Union{Array{String,1},Nothing} = []
 end
 
-Base.@kwdef struct ProcessSpec
-    name::String
-    func::String
+Base.@kwdef struct FuncSpec
+    nodename::String
+    funcname::String
     args::Union{Array{String,1},Nothing} = []
     priority::Int16
+    prioritytime::Int16
     maxwaittime::Int16
     maxexectime::Int16
     maxretries::Int16
     conditions::Conditions
+    label::String
     env::Dict{String,String}
 
-    function ProcessSpec(name, func, args, priority, maxwaittime, maxexectime, maxretries, conditions, env)
-        new(name, func, args, priority, maxwaittime, maxexectime, maxretries, conditions, env)
+    function FuncSpec(name, func, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
+        new(name, func, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
     end
 end
 
@@ -100,7 +102,7 @@ Base.@kwdef struct Process
     execdeadline::String
     retries::UInt16
     attributes::Union{Array{Attribute,1},Nothing} = []
-    spec::ProcessSpec
+    spec::FuncSpec
     waitforparents::Bool
     parents::Union{Array{String,1},Nothing} = []
     children::Union{Array{String,1},Nothing} = []
