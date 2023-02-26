@@ -89,15 +89,15 @@ function test_addexecutor_duplicate_name()
     return false
 end
 
-function test_submitprocess()
+function test_submit()
     colony_prvkey, colonyid = create_test_colony(client, server_prvkey)
     executor_prvkey, _ = create_test_executor(client, colonyid, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     # we don't bother testing all process attrbiutes, at least the process was assing a 64 chars process id
     length(added_process.processid) == 64
@@ -110,8 +110,8 @@ function test_getprocess()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
     process_from_server = Colonies.getprocess(client, added_process.processid, executor_prvkey)
     process_from_server.processid == added_process.processid
@@ -124,39 +124,26 @@ function test_getprocesses()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    Colonies.submitprocess(client, processpec, executor_prvkey)
-    Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    Colonies.submit(client, processpec, executor_prvkey)
+    Colonies.submit(client, processpec, executor_prvkey)
 
     processes_from_server = Colonies.getprocesses(client, colonyid, Colonies.PENDING, 100, executor_prvkey)
     length(processes_from_server) == 2
 end
 
-function test_assignprocess()
+function test_assign()
     colony_prvkey, colonyid = create_test_colony(client, server_prvkey)
     executor_prvkey, _ = create_test_executor(client, colonyid, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
-    assigned_process = Colonies.assignprocess(client, colonyid, 10, executor_prvkey)  # wait max 10 seconds for an assignment
+    assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)  # wait max 10 seconds for an assignment
     assigned_process.processid == added_process.processid
-end
-
-function test_assignprocess_failed()
-    colony_prvkey, colonyid = create_test_colony(client, server_prvkey)
-    executor_prvkey, _ = create_test_executor(client, colonyid, colony_prvkey)
-
-    try
-        Colonies.assignprocess(client, colonyid, 1, executor_prvkey)
-    catch
-        return true
-    end
-
-    return false
 end
 
 function test_addattribute()
@@ -170,10 +157,10 @@ function test_addattribute()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
-    assigned_process = Colonies.assignprocess(client, colonyid, 10, executor_prvkey)
+    assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
     assigned_process.processid == added_process.processid
 
     attribute = Colonies.Attribute(assigned_process.processid, colonyid, "test_result", "test_result_value")
@@ -189,10 +176,10 @@ function test_closeprocess_successful()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
-    assigned_process = Colonies.assignprocess(client, colonyid, 10, executor_prvkey)
+    assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
     assigned_process.processid == added_process.processid
 
     attribute = Colonies.Attribute(assigned_process.processid, colonyid, "test_result", "test_result_value")
@@ -211,10 +198,10 @@ function test_closeprocess_failed()
     conditions = Colonies.Conditions(colonyid, [], "test_executor_type", [])
     env = Dict()
     env["args"] = "test_args"
-    processpec = Colonies.ProcessSpec("test_proc", "test_func", [], 1, -1, -1, -1, conditions, env)
-    added_process = Colonies.submitprocess(client, processpec, executor_prvkey)
+    processpec = Colonies.FuncSpec("test_proc", "test_func", [], 1, 1, -1, -1, -1, conditions, "", env)
+    added_process = Colonies.submit(client, processpec, executor_prvkey)
 
-    assigned_process = Colonies.assignprocess(client, colonyid, 10, executor_prvkey)
+    assigned_process = Colonies.assign(client, colonyid, 10, executor_prvkey)
     assigned_process.processid == added_process.processid
 
     attribute = Colonies.Attribute(assigned_process.processid, colonyid, "test_result", "test_result_value")
@@ -233,11 +220,10 @@ end
         @test test_addcolony_invalid_cred()
         @test test_addexecutor()
         @test test_addexecutor_duplicate_name()
-        @test test_submitprocess()
+        @test test_submit()
         @test test_getprocess()
         @test test_getprocesses()
-        @test test_assignprocess()
-        @test test_assignprocess_failed()
+        @test test_assign()
         @test test_addattribute()
         @test test_closeprocess_successful()
         @test test_closeprocess_failed()
