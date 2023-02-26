@@ -40,6 +40,18 @@ function addexecutor(client::ColoniesClient, executor::Executor, prvkey::String)
     unmarshaljson(payload, Executor)
 end
 
+function addfunction(client::ColoniesClient, func::Function, prvkey::String)
+    rpcmsg = AddFunctionRPC(func, "addfunctionmsg")
+    rpcjson = marshaljson(rpcmsg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addfunctionmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Function)
+end
+
 function approveexecutor(client::ColoniesClient, executorid::String, prvkey::String)
     rpcmsg = ApproveExecutorRPC(executorid, "approveexecutormsg")
     rpcjson = marshaljson(rpcmsg)
@@ -51,8 +63,8 @@ function approveexecutor(client::ColoniesClient, executorid::String, prvkey::Str
     sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
 end
 
-function submit(client::ColoniesClient, spec::FuncSpec, prvkey::String)
-    rpcmsg = SubmitFuncSpecRPC(spec, "submitfuncspecmsg")
+function submit(client::ColoniesClient, spec::FunctionSpec, prvkey::String)
+    rpcmsg = SubmitFunctionSpecRPC(spec, "submitfuncspecmsg")
     rpcjson = marshaljson(rpcmsg)
 
     payload = base64enc(rpcjson)
@@ -63,7 +75,7 @@ function submit(client::ColoniesClient, spec::FuncSpec, prvkey::String)
     unmarshaljson(payload, Process)
 end
 
-function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FuncSpec, prvkey::String)
+function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FunctionSpec, prvkey::String)
     rpcmsg = AddChildRPC(processgraphid, processid, spec, "addchildmsg")
     rpcjson = marshaljson(rpcmsg)
 
