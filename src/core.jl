@@ -78,7 +78,6 @@ Base.@kwdef struct FunctionSpec
     funcname::String
     args::Union{Array{String,1},Nothing} = []
     priority::Int16
-    prioritytime::Int16
     maxwaittime::Int16
     maxexectime::Int16
     maxretries::Int16
@@ -86,8 +85,8 @@ Base.@kwdef struct FunctionSpec
     label::String
     env::Dict{String,String}
 
-    function FunctionSpec(name, funcname, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
-        new(name, funcname, args, priority, prioritytime, maxwaittime, maxexectime, maxretries, conditions, label, env)
+    function FunctionSpec(nodename, funcname, args, priority, maxwaittime, maxexectime, maxretries, conditions, label, env)
+        new(nodename, funcname, args, priority, maxwaittime, maxexectime, maxretries, conditions, label, env)
     end
 end
 
@@ -114,6 +113,7 @@ Base.@kwdef struct Process
     assignedexecutorid::String
     isassigned::Bool
     state::UInt16
+    prioritytime::UInt64
     submissiontime::String
     starttime::String
     endtime::String
