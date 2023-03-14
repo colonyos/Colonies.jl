@@ -31,8 +31,10 @@ end
 
 struct AddChildRPC
     processgraphid::String
-    processid::String
+    parentprocessid::String
+    childprocessid::String
     spec::FunctionSpec
+    insert::Bool
     msgtype::String
 end
 
