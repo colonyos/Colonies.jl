@@ -52,8 +52,8 @@ function addfunction(client::ColoniesClient, func::Function, prvkey::String)
     unmarshaljson(payload, Function)
 end
 
-function approveexecutor(client::ColoniesClient, executorid::String, prvkey::String)
-    rpcmsg = ApproveExecutorRPC(executorid, "approveexecutormsg")
+function approveexecutor(client::ColoniesClient, colonyname::String, executorname::String, prvkey::String)
+    rpcmsg = ApproveExecutorRPC(colonyname, executorname, "approveexecutormsg")
     rpcjson = marshaljson(rpcmsg)
 
     payload = base64enc(rpcjson)
@@ -72,7 +72,7 @@ function submit(client::ColoniesClient, spec::FunctionSpec, prvkey::String)
     rpcmsg = RPCMsg(sig, "submitfuncspecmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-    unmarshaljson(payload, Process)
+	unmarshaljson(payload, Process)
 end
 
 function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FunctionSpec, prvkey::String)
@@ -99,8 +99,8 @@ function getprocess(client::ColoniesClient, processid::String, prvkey::String)
     unmarshaljson(payload, Process)
 end
 
-function getprocesses(client::ColoniesClient, colonyid::String, state::Int64, count::Int64, prvkey::String)
-    rpcmsg = GetProcessesRPC(colonyid, state, count, "getprocessesmsg")
+function getprocesses(client::ColoniesClient, colonyname::String, state::Int64, count::Int64, prvkey::String)
+    rpcmsg = GetProcessesRPC(colonyname, state, count, "getprocessesmsg")
     rpcjson = marshaljson(rpcmsg)
 
     payload = base64enc(rpcjson)
@@ -111,8 +111,8 @@ function getprocesses(client::ColoniesClient, colonyid::String, state::Int64, co
     unmarshaljson(payload, AbstractArray{Process})
 end
 
-function assign(client::ColoniesClient, colonyid::String, timeout::Int64, prvkey::String)
-    rpcmsg = AssignProcessRPC(colonyid, false, timeout, "assignprocessmsg")
+function assign(client::ColoniesClient, colonyname::String, timeout::Int64, prvkey::String)
+    rpcmsg = AssignProcessRPC(colonyname, false, timeout, "assignprocessmsg")
     rpcjson = marshaljson(rpcmsg)
 
     payload = base64enc(rpcjson)
@@ -151,9 +151,6 @@ function addattribute(client::ColoniesClient, attribute::Attribute, prvkey::Stri
 end
 
 function closeprocess(client::ColoniesClient, processid::String, prvkey::String, out::Vector{String}=String[])
-    @show(prvkey)
-    @show(processid)
-
     payloadtype = "closesuccessfulmsg"
     rpcmsg = CloseSuccessfulRPC(processid, payloadtype, out)
     rpcjson = marshaljson(rpcmsg)

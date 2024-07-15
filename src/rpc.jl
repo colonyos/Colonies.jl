@@ -20,7 +20,8 @@ struct AddFunctionRPC
 end
 
 struct ApproveExecutorRPC
-    executorid::String
+    colonyname::String
+    executorname::String
     msgtype::String
 end
 
@@ -44,14 +45,14 @@ struct GetProcessRPC
 end
 
 struct GetProcessesRPC
-    colonyid::String
+    colonyname::String
     state::Int64
     count::Int64
     msgtype::String
 end
 
 struct AssignProcessRPC
-    colonyid::String
+    colonyname::String
     latest::Bool
     timeout::Int64
     msgtype::String
