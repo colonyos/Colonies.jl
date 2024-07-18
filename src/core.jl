@@ -2,10 +2,10 @@ const PENDING = 0
 const APPROVED = 1
 const REJECTED = 2
 
-const IN = 0
-const OUT = 1
-const ERR = 2
-const ENV = 4
+const IN_TYPE = 0
+const OUT_TYPE = 1
+const ERR_TYPE = 2
+const ENV_TYPE = 4
 
 const WAITING = 0
 const RUNNING = 1
@@ -103,34 +103,24 @@ Base.@kwdef struct Function
 		new(functionid, executorname, executortype, colonyname, funcname, counter, minwaittime, maxwaittime, minexectime, maxexectime, avgwaittime, avgexectime)
 	end
 
-	#  func = Colonies.Function(executor.executorid, colonyname, "testfunc", "tes  tdesc", [])
-	#
 	function Function(executorname::String, colonyname::String, funcname::String) 
 		new("", executorname, "", colonyname, funcname, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 	end
-
-
-    # function Function(executorid, colonyid, funcname, desc, args)
-    #     new("", Ixecutorid, colonyid, funcname, desc, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, args)
-    # end
-    #
-    # function Function(functionid, executorid, colonyid, funcname, desc, counter, minwaittime, maxwaittime, minexectime, maxexectime, avgwaittime, avgexectime, args)
-    #     new(functionid, executorid, colonyid, funcname, desc, counter, minwaittime, maxwaittime, minexectime, maxexectime, avgwaittime, avgexectime, args)
-    # end
 end
 
 
 @kwdef struct Conditions
-    colonyname::String
-    executornames::Union{Array{String, 1}, Nothing}
-    executortype::String
+    colonyname::String = ""
+    executornames::Union{Array{String, 1}, Nothing} = []
+    executortype::String = ""
     dependencies::Union{Array{String, 1}, Nothing} = []
-    nodes::Int64 = 0
-    cpu::String = ""
-    processes::Int64 = 0
-    processespernode::Int64 = 0
-    mem::String = ""
-    storage::String = ""
+    nodes::Int64 = 1
+    cpu::String = "1000m"
+    processes::Int64 = 1 
+    processespernode::Int64 = 1 
+    mem::String = "1000Mi"
+    storage::String = "OGi"
+    #gpu::GPU = Union{GPU, Nothing} = GPU("", "", 0, 0)
     gpu::GPU = Union{GPU, Nothing}
     walltime::Int64 = ""
 
@@ -140,7 +130,7 @@ end
         executortype::String,
         dependencies::Union{Array{String, 1}, Nothing} = []
     )
-	new(colonyname, executornames, executortype, dependencies, 0, "", 0, 0, "", "", GPU("", "", 0, 0), 0)
+	new(colonyname, executornames, executortype, dependencies, 1, "", 1, 1, "", "", GPU("", "", 0, 0), 0)
     end
 
     function Conditions(
@@ -151,14 +141,18 @@ end
         nodes::Int64,
         cpu::String,
         processes::Int64,
-        processes_per_node::Int64,
+        processespernode::Int64,
         mem::String,
         storage::String,
         gpu::GPU,
         walltime::Int64
     )
-        new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processes_per_node, mem, storage, gpu, walltime)
+        new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
     end
+
+	function Conditions(; colonyname::String, executornames::Union{Array{String, 1}, Nothing}, executortype::String, dependencies::Union{Array{String, 1}, Nothing}, nodes::Int64, cpu::String, processes::Int64, processespernode::Int64, mem::String, storage::String, gpu::GPU, walltime::Int64)
+		new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
+	end
 end
 
 Base.@kwdef struct SnapshotMount
@@ -193,6 +187,14 @@ Base.@kwdef struct Filesystem
 	mount::String = ""
     snapshots::Union{Array{SnapshotMount,1},Nothing} = []
     dirs::Union{Array{SyncDirMount,1},Nothing} = []
+end
+
+Base.@kwdef struct Log 
+    processid::String
+    colonyname::String
+    executorname::String
+    message::String
+    timestamp::Int64
 end
 
 @kwdef struct FunctionSpec
@@ -297,7 +299,7 @@ Base.@kwdef struct Attribute
 	end
 
 	function Attribute(targetid::String, targetcolonyname::String, key::String, value::String)
-		new("", targetid, targetcolonyname, "", OUT, 0, key, value)
+		new("", targetid, targetcolonyname, "", OUT_TYPE, 0, key, value)
 	end
 end
 
