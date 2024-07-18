@@ -124,7 +124,7 @@ function test_submit()
     length(added_process.processid) == 64
 end
 
-function test_func()
+function test_addfunc()
     colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
     executor_prvkey, executor = create_test_executor(client, colonyname, colony_prvkey)
 
@@ -217,6 +217,25 @@ function test_closeprocess_failed()
     closed_process.state == Colonies.FAILED
 end
 
+function test_addlog()
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
+
+    conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    added_process = Colonies.submit(client, funcspec, executor_prvkey)
+
+    assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
+
+	Colonies.addlog(client, assigned_process.processid, "test_log_1", executor_prvkey)
+	Colonies.addlog(client, assigned_process.processid, "test_log_2", executor_prvkey)
+
+    Colonies.closeprocess(client, assigned_process.processid, executor_prvkey)
+
+	logs = Colonies.getlogs(client, colonyname, assigned_process.processid, 10, 0, executor_prvkey)
+	length(logs) == 2 
+end
+
 @testset begin
     try
         @test test_failed_connect()
@@ -231,7 +250,8 @@ end
         @test test_addattribute()
         @test test_closeprocess_successful()
         @test test_closeprocess_failed()
-        @test test_func()
+        @test test_addfunc()
+        @test test_addlog()
     catch err
         typeof(err) == InterruptException && rethrow(err)
         print(err)

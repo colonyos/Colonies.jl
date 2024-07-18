@@ -75,6 +75,21 @@ struct CloseFailedRPC
     errors::Vector{String}
 end
 
+struct AddLogRPC
+    processid::String
+    message::String
+    msgtype::String
+end
+
+struct GetLogsRPC
+    colonyname::String
+    processid::String
+    executorname::String
+    count::Int
+    since::Int64
+    msgtype::String
+end
+
 Base.@kwdef mutable struct ColoniesError <: Exception
     message::String
     status::Int64
