@@ -210,11 +210,8 @@ function getlogs(client::ColoniesClient, colonyname::String, processid::String, 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
     rpcmsg = RPCMsg(sig, "getlogsmsg", payload)
-
-    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-
-	println(payload)
-
+    
+	payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
 	unmarshaljson(payload, AbstractArray{Log})
 end
 
