@@ -1,148 +1,337 @@
 [![codecov](https://codecov.io/gh/colonyos/Colonies.jl/branch/main/graph/badge.svg?token=EJJ6X2ST2L)](https://codecov.io/gh/colonyos/Colonies.jl) [![Julia](https://github.com/colonyos/Colonies.jl/actions/workflows/julia.yaml/badge.svg)](https://github.com/colonyos/Colonies.jl/actions/workflows/julia.yaml)
 
 # Introduction
-This repo contains a Julia implementation of the [Colonies API](https://github.com/colonyos/colonies), making it possible to implement Colonies Executors in Julia.
+This repo contains a Julia SDK for the [Colonies API](https://github.com/colonyos/colonies), making it possible to implement ColonyOS applications in Julia.
+See these [tutorials](https://github.com/colonyos/tutorials) for more information.
 
-## Start a Colonies server 
-```console
-source devenv
-colonies dev
+## Setting up a development environment
+The following commands will use Docker Compose to set up and configure a Colonies server, a TimescaleDB, a Minio server, and a Docker Executor. To set up a production environment, it is recommended to use Kubernetes.
+
+*Note!* The *docker-compose.env* file contains credentials and configuration and must be sourced before using the Colonies CLI command.
+
+```bash
+wget https://raw.githubusercontent.com/colonyos/colonies/main/docker-compose.env;
+source docker-compose.env;
+wget https://raw.githubusercontent.com/colonyos/colonies/main/docker-compose.yml;
+docker-compose up
 ```
 
-## Create a colony
-This requires access to a Colonies server and server private key. Only server owners are allowed to create new Colonies.
+Press control-c to exit.
+
+To remove all data, type:
+```bash
+docker-compose down --volumes
+```
+
+For convinence, the **Colonies.client()** also reads all settings from the *docker-compose.env* file.
+```julia
+client, colonyname, colony_prvkey, executorname, prvkey = Colonies.client()
+```
+
+## Installing the Colonies CLI
+The Colonies CLI can be downloaded [here](https://github.com/colonyos/colonies/releases). Linux, Window, and Apple is supported.
+
+Copy the binary to directory availble in the *PATH* e.g. **/usr/local/bin**.
+```bash
+sudo cp colonies /use/local/bin
+```
+
+```bash
+colonies --help
+```
+
+On MacOS there is an error first time you run it. You need to grant the Colonies CLI permission to execute. Open System Settings, go to Privacy & Security, and click on the *Allow* button next to *colonies* to enable it to execute.
+
+Start another terminal and run the command below to load the credentials and settings, allowing the Colonies CLI to connect to the Colonies server started with Docker compose.
+
+```bash
+source docker-compose.env
+```
+
+We can now interact with the Colonies server, and for example, list available executors.
+```bash
+colonies executor ls
+```
+
+```console
+╭────────────┬────────────────────┬──────────┬─────────────────────╮
+│ NAME       │ TYPE               │ LOCATION │ LAST HEARD FROM     │
+├────────────┼────────────────────┼──────────┼─────────────────────┤
+│ dev-docker │ container-executor │ n/a      │ 2024-06-29 13:37:27 │
+╰────────────┴────────────────────┴──────────┴─────────────────────╯
+```
+
+## Submit a job to a Docker Executor
+Let's submit a function spec to the Docker Executor. This will launch a Docker container running the command `echo hello world`.
 
 ```julia
-server_prvkey = "fcc79953d8a751bf41db661592dc34d30004b1a651ffa0725b03ac227641499d"
-colony_prvkey = Crypto.prvkey()
-colonyid = Crypto.id(colony_prvkey)
+client, colonyname, colony_prvkey, executorname, prvkey = Colonies.client()
 
-println("colony prvkey: ", colony_prvkey)
-println("colonyid: ", colonyid)
+conditions = Colonies.Conditions(colonyname=colonyname,
+                                 executornames=String["dev-docker"],
+                                 executortype="container-executor",
+                                 walltime=60)
 
-client = Colonies.ColoniesClient("http", "localhost", 50080)
+ env = Dict{Any, Any}()
+ kwargs = Dict{Any, Any}()
+ kwargs["cmd"] = "echo hello world"
+ kwargs["docker-image"] = "ubuntu:20.04"
 
-colony = Colonies.Colony(colonyid, "my_colony")
-addedcolony = Colonies.addcolony(client, colony, server_prvkey)
-println(addedcolony)
+ funcspec = Colonies.FunctionSpec(funcname="execute",
+                                  kwargs=kwargs,
+                                  maxretries=3,
+                                  maxexectime=55,
+                                  conditions=conditions,
+                                  label="myprocess",
+                                  fs=Colonies.Filesystem())
+
+process = Colonies.submit(client, funcspec, prvkey)
+println("Process submitted: ", process.processid)
+
+println("Waiting for process to finish ...")
+Colonies.wait(client, process, 60, prvkey)
+println("Process finished")
+
+println("Getting 100 last logs")
+logs = Colonies.getlogs(client, colonyname, process.processid, 100, 0, prvkey)
+for log in logs
+    print(log.message)
+end
+```
+
+To run the example below, type:
+```console
+source docker-compose.env
+cd examples
+julia container.jl
 ```
 
 ```console
-julia create_colony.jl 
+Activating project at `~/dev/github/colonyos/Colonies.jl`
+Process submitted: 99d2b21ea7a911834aa882f777e3f1bcccdadb62fae4c7d8922571b6d70053c1
+Waiting for process to finish ...
+Process finished
+Getting 100 last logs
+Pulling from library/ubuntu
+Digest: sha256:0b897358ff6624825fb50d20ffb605ab0eaea77ced0adb8c6a4b756513dec6fc
+Status: Image is up to date for ubuntu:20.04
+hello world
 ```
 
-Output:
-```console
-colony prvkey: 8449d00c8b128700904f2ae0cdbf7c025cb42cd920487798adeacb06f0216a3e
-colonyid: f79dab605840c81a1d6d871f2964ed43120a13c218d04a06205f704e274af2ee
-Colonies.Colony("f79dab605840c81a1d6d871f2964ed43120a13c218d04a06205f704e274af2ee", "my_colony")
-```
+# Developing an Executor
+To develop an executor, the following conceptual steps must be followed:
 
-## Fibonacci task generator
+1. Generate a new private key.
+2. Register the executor with the Colonies server using the colony's private key.
+3. Call the assign function to receive process assignments.
+4. Interpret the assigned process and perform some kind of computation.
+5. Complete the process and set output values.
+6. Repeat Step 3 to receive the next process assignment.
+
 ```julia
-...
-# submit a process spec
-conditions = Colonies.Conditions(colonyid, [], "fibonacci_solver", [])
-env = Dict()
-env["fibonacci_num"] = args[2]
-processpec = Colonies.ProcessSpec("fibonacci", "fibonacci", [], 1, -1, -1, -1, conditions, 
-process = Colonies.submitprocess(server, processpec, executor_prvkey)
-...
+client, colonyname, colony_prvkey, executorname, prvkey = Colonies.client()
+
+name = randstring(12)
+executor_prvkey = Crypto.prvkey()
+executor = Colonies.Executor(Crypto.id(executor_prvkey), "helloworld-executor", name, colonyname)
+
+executor = Colonies.addexecutor(client, executor, colony_prvkey)
+Colonies.approveexecutor(client, colonyname, executor.executorname, colony_prvkey)
+
+while true
+    try
+        process = Colonies.assign(client, colonyname, 10, executor_prvkey)
+        if process == nothing
+            println("No process could be assigned, retrying ..")
+            continue
+        end
+        if process.spec.funcname == "helloworld"
+            println("Executor assigned process: ", process.processid)
+            Colonies.addlog(client, process.processid, "Julia says Hello World!\n", executor_prvkey)
+            Colonies.closeprocess(client, process.processid, executor_prvkey, ["Hello World!"])
+        else
+            Colonies.failprocess(client, process.processid, executor_prvkey, ["Invalid function name"])
+        end
+    catch e
+        println(e)
+    end
+end
+```
+
+To run the example below, type:
+```console
+source docker-compose.env
+cd examples
+julia helloworld_executor.jl
+```
+
+We now have a new executor available.
+
+```console
+colonies executor ls
 ```
 
 ```console
-julia generator.jl 12                                                          11:21:25
+╭──────────────┬─────────────────────┬──────────┬─────────────────────╮
+│ NAME         │ TYPE                │ LOCATION │ LAST HEARD FROM     │
+├──────────────┼─────────────────────┼──────────┼─────────────────────┤
+│ V4uadfkRM2aP │ helloworld-executor │          │ 2024-07-19 14:58:38 │
+│ dev-docker   │ container-executor  │ n/a      │ 2024-07-19 14:57:20 │
+╰──────────────┴─────────────────────┴──────────┴──
 ```
 
-Output:
+To create an helloworld process, we need to submit a function spec to the Colonies server.
+```json
+{
+    "conditions": {
+        "executortype": "helloworld-executor"
+    },
+    "funcname": "helloworld"
+}
+```
+
 ```console
-- registering a new executor to colony 4787a5071856a4acf702b2ffcea422e3237a679c681314113d86139461290cf4
-  executor_prvkey: 4354efffdc4a2bfb304121aecbdbaa9a51be91b6c2608ebc0321b727fe225830
-  executorid: 3a76f43bfecf6d9168c29c43101e35e2d31799720eae6e57330fa98890b6cdb9
-- approving executor 3a76f43bfecf6d9168c29c43101e35e2d31799720eae6e57330fa98890b6cdb9
-- submitting process spec, fibonacci_num=12, target_executor=fibonacci_solver
-  processid: 6e9ff157d25a6aa417a8400915249d4b8accc19d2e760d97d18aca59ea23544f
+source docker-compose.env
+cd examples
+colonies function submit --spec helloworld.json --follow
 ```
 
-## Fibonacci task solver 
+```console
+INFO[0000] Process submitted                             ProcessId=56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6
+INFO[0000] Printing logs from process                    ProcessId=56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6
+Julia says Hello World!
+INFO[0002] Process finished successfully                 ProcessId=56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6
+```
+
+We can also look up the process the Colonies CLI.
+```console
+colonies process get -p 56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6
+```
+
+```console
+╭───────────────────────────────────────────────────────────────────────────────────────╮
+│ Process                                                                               │
+├────────────────────┬──────────────────────────────────────────────────────────────────┤
+│ Id                 │ 56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6 │
+│ IsAssigned         │ True                                                             │
+│ InitiatorID        │ 3fc05cf3df4b494e95d6a3d297a34f19938f7daa7422ab0d4f794454133341ac │
+│ Initiator          │ myuser                                                           │
+│ AssignedExecutorID │ a8379b78f7b2dc40d600f61f21af500bc28f10050941f8ce23fce474f8bb9102 │
+│ AssignedExecutorID │ Successful                                                       │
+│ PriorityTime       │ 1721393484612965836                                              │
+│ SubmissionTime     │ 2024-07-19 14:51:24                                              │
+│ StartTime          │ 2024-07-19 14:51:24                                              │
+│ EndTime            │ 2024-07-19 14:51:24                                              │
+│ WaitDeadline       │ 0001-01-01 00:53:28                                              │
+│ ExecDeadline       │ 0001-01-01 00:53:28                                              │
+│ WaitingTime        │ 718.755ms                                                        │
+│ ProcessingTime     │ 367.829ms                                                        │
+│ Retries            │ 0                                                                │
+│ Input              │                                                                  │
+│ Output             │ Hello World!                                                     │
+│ Errors             │                                                                  │
+╰────────────────────┴──────────────────────────────────────────────────────────────────╯
+╭──────────────────────────╮
+│ Function Specification   │
+├─────────────┬────────────┤
+│ Func        │ helloworld │
+│ Args        │ None       │
+│ KwArgs      │ None       │
+│ MaxWaitTime │ -1         │
+│ MaxExecTime │ -1         │
+│ MaxRetries  │ 0          │
+│ Label       │            │
+╰─────────────┴────────────╯
+╭────────────────────────────────────────╮
+│ Conditions                             │
+├──────────────────┬─────────────────────┤
+│ Colony           │ dev                 │
+│ ExecutorNames    │ None                │
+│ ExecutorType     │ helloworld-executor │
+│ Dependencies     │                     │
+│ Nodes            │ 0                   │
+│ CPU              │ 0m                  │
+│ Memory           │ 0Mi                 │
+│ Processes        │ 0                   │
+│ ProcessesPerNode │ 0                   │
+│ Storage          │ 0Mi                 │
+│ Walltime         │ 0                   │
+│ GPUName          │                     │
+│ GPUs             │ 0                   │
+│ GPUPerNode       │ 0                   │
+│ GPUMemory        │ 0Mi                 │
+╰──────────────────┴─────────────────────╯
+```
+
+# Submitting jobs from Julia
 ```julia
-...
-# request a waiting process, wait max 10 seconds for an assignment
-assigned_process = Colonies.assignprocess(server, colonyid, 10, executor_prvkey)  
-fibonacci_num = parse(Int64, assigned_process.attributes[1].value)
-res = fib(fibonacci_num)
+client, colonyname, colony_prvkey, executorname, prvkey = Colonies.client()
 
-# add an attribute to the process
-println("- add result attribute")
-attribute = Colonies.Attribute(assigned_process.processid, "result", string(res))
-Colonies.addattribute(server, attribute, executor_prvkey)
-...
+conditions = Colonies.Conditions(colonyname=colonyname,
+                                 executortype="helloworld-executor")
+
+funcspec = Colonies.FunctionSpec(funcname="helloworld",
+                                 maxretries=3,
+                                 maxexectime=55,
+                                 conditions=conditions,
+                                 label="helloworld-process")
+
+process = Colonies.submit(client, funcspec, prvkey)
+println("Process submitted: ", process.processid)
+
+println("Waiting for process to finish ...")
+Colonies.wait(client, process, 60, prvkey)
+println("Process finished")
+
+println("Getting 100 last logs")
+logs = Colonies.getlogs(client, colonyname, process.processid, 100, 0, prvkey)
+for log in logs
+    print(log.message)
+end
+```
+
+To run the example, type:
+```console
+source docker-compose.env
+cd examples
+julia helloworld.jl
 ```
 
 ```console
-julia solver.jl
+Activating project at `~/dev/github/colonyos/Colonies.jl`
+Process submitted: 9a4c74b2617711eb356fa85839554092b4a01abac380f51ff27a3796796ef32d
+Waiting for process to finish ...
+Process finished
+Getting 100 last logs
+Julia says Hello World!
 ```
 
-Output:
+# Logging
+It is also possible to search for logs.
 ```console
-- registering a new executor to colony 4787a5071856a4acf702b2ffcea422e3237a679c681314113d86139461290cf4
-- approving executor 6b6c186cfd9be0c7d6fbefa121e21aeeea1f1a95853d6eaf170ac2549390dfb7
-- assign process
-  fibonacci_num: 12
-  result: 144
-- add result attribute
-- close process
-```
-
-### Look up the process using the Colonies CLI
-```console
-./bin/colonies process get --processid 6e9ff157d25a6aa417a8400915249d4b8accc19d2e760d97d18aca59ea23544f
+colonies log search --text "Hello" -d 30
 ```
 
 ```console
-INFO[0000] Starting a Colonies client                    Insecure=true ServerHost=localhost ServerPort=50080
-Process:
-+--------------------+------------------------------------------------------------------+
-| ID                 | 6e9ff157d25a6aa417a8400915249d4b8accc19d2e760d97d18aca59ea23544f |
-| IsAssigned         | True                                                             |
-| AssignedExecutorID | 6b6c186cfd9be0c7d6fbefa121e21aeeea1f1a95853d6eaf170ac2549390dfb7 |
-| State              | Successful                                                       |
-| Priority           | 1                                                                |
-| SubmissionTime     | 2022-08-09 11:26:38                                              |
-| StartTime          | 2022-08-09 11:27:32                                              |
-| EndTime            | 2022-08-09 11:27:32                                              |
-| WaitDeadline       | 0001-01-01 01:12:12                                              |
-| ExecDeadline       | 0001-01-01 01:12:12                                              |
-| WaitingTime        | 54.073752s                                                       |
-| ProcessingTime     | 491.359ms                                                        |
-| Retries            | 0                                                                |
-| ErrorMsg           |                                                                  |
-+--------------------+------------------------------------------------------------------+
-
-ProcessSpec:
-+-------------+-----------+
-| Func        | fibonacci |
-| Args        | None      |
-| MaxWaitTime | -1        |
-| MaxExecTime | -1        |
-| MaxRetries  | -1        |
-| Priority    | 1         |
-+-------------+-----------+
-
-Conditions:
-+--------------+------------------------------------------------------------------+
-| ColonyID     | 4787a5071856a4acf702b2ffcea422e3237a679c681314113d86139461290cf4 |
-| ExecutorIDs  | None                                                             |
-| ExecutorType | fibonacci_solver                                                 |
-+--------------+------------------------------------------------------------------+
-
-Attributes:
-+------------------------------------------------------------------+---------------+-------+------+
-|                                ID                                |      KEY      | VALUE | TYPE |
-+------------------------------------------------------------------+---------------+-------+------+
-| 24cb6bbf7b1a7120affcb63cec61dd377c208fa88909d7828acd07fe9846f081 | fibonacci_num | 12    | Env  |
-| b40d0861d02dc5618f3b336c751856e4e028686484144b315e1ee000749e6e72 | output        | 144   | Out  |
-+------------------------------------------------------------------+---------------+-------+------+
+INFO[0000] Searching for logs                            Count=20 Days=30 Text=Hello
+╭──────────────┬──────────────────────────────────────────────────────────────────╮
+│ Timestamp    │ 2024-07-19 14:57:47                                              │
+│ ExecutorName │ V4uadfkRM2aP                                                     │
+│ ProcessID    │ 9a4c74b2617711eb356fa85839554092b4a01abac380f51ff27a3796796ef32d │
+│ Text         │ Julia says Hello World!                                          │
+╰──────────────┴──────────────────────────────────────────────────────────────────╯
+╭──────────────┬──────────────────────────────────────────────────────────────────╮
+│ Timestamp    │ 2024-07-19 14:51:25                                              │
+│ ExecutorName │ V4uadfkRM2aP                                                     │
+│ ProcessID    │ 56edc0017579a62cd11c150b07df2bbf535c684722a3bb04000aabee7fdb02f6 │
+│ Text         │ Julia says Hello World!                                          │
+╰──────────────┴──────────────────────────────────────────────────────────────────╯
 ```
 
-Note the **result** attribute.
+```console
+colonies log get -p  9a4c74b2617711eb356fa85839554092b4a01abac380f51ff27a3796796ef32d
+```
+
+```console
+Julia says Hello World!
+```
