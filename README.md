@@ -177,7 +177,7 @@ colonies executor ls
 ├──────────────┼─────────────────────┼──────────┼─────────────────────┤
 │ V4uadfkRM2aP │ helloworld-executor │          │ 2024-07-19 14:58:38 │
 │ dev-docker   │ container-executor  │ n/a      │ 2024-07-19 14:57:20 │
-╰──────────────┴─────────────────────┴──────────┴──
+╰──────────────┴─────────────────────┴──────────┴─────────────────────╯
 ```
 
 To create an helloworld process, we need to submit a function spec to the Colonies server.
