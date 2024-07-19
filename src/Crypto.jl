@@ -37,10 +37,10 @@ end
 
 function jacobian_double(p::Tuple{BigInt, BigInt, BigInt})::Tuple{BigInt, BigInt, BigInt}
     if p[2] == 0
-        return (BigInt(0), BigInt(0), BigInt(0))
+         return (BigInt(0), BigInt(0), BigInt(0))
     end
 
-	ysq = mod(p[2] ^ 2, P)
+    ysq = mod(p[2] ^ 2, P)
     S = mod(4 * p[1] * ysq, P)
     M = mod(3 * p[1] ^ 2 + A * p[3] ^ 4, P)
     nx = mod(M ^ 2 - 2 * S, P)
@@ -82,10 +82,10 @@ function jacobian_add(p::Tuple{BigInt, BigInt, BigInt}, q::Tuple{BigInt, BigInt,
 end
 
 function fast_multiply(a::Tuple{BigInt, BigInt}, n::BigInt)::Tuple{BigInt, BigInt}
-	j = to_jacobian(a)
-	m = jacobian_multiply(j, n)
-	res = from_jacobian(m)
-	return res
+    j = to_jacobian(a)
+    m = jacobian_multiply(j, n)
+    res = from_jacobian(m)
+    return res
 end
 
 function inv(a::BigInt, n::BigInt)::BigInt
@@ -105,25 +105,25 @@ end
 
 function jacobian_multiply(a::Tuple{BigInt, BigInt, BigInt}, n::BigInt)::Tuple{BigInt, BigInt, BigInt}
     if a[2] == 0 || n == 0
-    	return (BigInt(0), BigInt(0), BigInt(1))
+        return (BigInt(0), BigInt(0), BigInt(1))
     end
     if n == 1
-		return a 
+        return a 
     end
     if n < 0 || n >= N
-		mul_res = jacobian_multiply(a, BigInt(mod(n, N)))
-		return mul_res
+        mul_res = jacobian_multiply(a, BigInt(mod(n, N)))
+        return mul_res
     end
-	if mod(n ,2) == 0
-		mul_res = jacobian_multiply(a, BigInt(n ÷ 2))
-		double_res = jacobian_double(mul_res)
-		return double_res
-	elseif mod(n, 2) == 1
-		add_res = jacobian_add(jacobian_double(jacobian_multiply(a, BigInt(n ÷ 2))), a)
-		return add_res
-	else	
-		error("Invariant: Unreachable code path")
-	end
+    if mod(n ,2) == 0
+        mul_res = jacobian_multiply(a, BigInt(n ÷ 2))
+        double_res = jacobian_double(mul_res)
+        return double_res
+    elseif mod(n, 2) == 1
+        add_res = jacobian_add(jacobian_double(jacobian_multiply(a, BigInt(n ÷ 2))), a)
+        return add_res
+    else	
+        error("Invariant: Unreachable code path")
+    end
 end
 
 function to_jacobian(p::Tuple{BigInt, BigInt})::Tuple{BigInt, BigInt, BigInt}
@@ -239,10 +239,10 @@ function deterministic_generate_k(msg_hash::Vector{UInt8}, private_key_bytes::Ve
 end
 
 function ecdsa_raw_sign(msg_hash::Vector{UInt8}, private_key_bytes::Vector{UInt8})::Tuple{BigInt, BigInt, BigInt}
-	z = big_endian_to_int(msg_hash)
+    z = big_endian_to_int(msg_hash)
     k = deterministic_generate_k(msg_hash, private_key_bytes)
     r, y = fast_multiply(G, k)
-	s_raw = mod(inv(k, N) * (z + r * big_endian_to_int(private_key_bytes)), N)
+    s_raw = mod(inv(k, N) * (z + r * big_endian_to_int(private_key_bytes)), N)
     v = 27 + ((mod(y, 2) ⊻ (if s_raw * 2 < N 0 else 1 end)))
     s = s_raw < N ÷ 2 ? s_raw : N - s_raw
     return v - 27, r, s
