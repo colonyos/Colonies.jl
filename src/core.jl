@@ -28,6 +28,14 @@ Base.@kwdef struct GPU
 	mem::String = ""
 	count::Int64 = 0
 	nodecount::Int64 = 0
+
+	function GPU(name::String, mem::String, count::Int64, nodecount::Int64)
+		new(name, mem, count, nodecount)
+	end
+
+	function GPU(name::String, mem::String, count::Int64)
+		new(name, mem, count, 0)
+	end
 end
 
 Base.@kwdef struct Hardware 
@@ -108,21 +116,19 @@ Base.@kwdef struct Function
 	end
 end
 
-
 @kwdef struct Conditions
     colonyname::String = ""
-    executornames::Union{Array{String, 1}, Nothing} = []
+    executornames::Union{Array{String, 1}, Nothing} = String[]
     executortype::String = ""
-    dependencies::Union{Array{String, 1}, Nothing} = []
+    dependencies::Union{Array{String, 1}, Nothing} = String[]
     nodes::Int64 = 1
     cpu::String = "1000m"
-    processes::Int64 = 1 
+    processes::Int64 = 0 
     processespernode::Int64 = 1 
-    mem::String = "1000Mi"
-    storage::String = "OGi"
-    #gpu::GPU = Union{GPU, Nothing} = GPU("", "", 0, 0)
-    gpu::GPU = Union{GPU, Nothing}
-    walltime::Int64 = ""
+    mem::String = "0Gi"
+    storage::String = "0Gi"
+	gpu::GPU = GPU("", "", 0, 0)
+    walltime::Int64 = 60 
 
     function Conditions(
         colonyname::String,
@@ -149,10 +155,6 @@ end
     )
         new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
     end
-
-	function Conditions(; colonyname::String, executornames::Union{Array{String, 1}, Nothing}, executortype::String, dependencies::Union{Array{String, 1}, Nothing}, nodes::Int64, cpu::String, processes::Int64, processespernode::Int64, mem::String, storage::String, gpu::GPU, walltime::Int64)
-		new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
-	end
 end
 
 Base.@kwdef struct SnapshotMount
@@ -198,18 +200,18 @@ Base.@kwdef struct Log
 end
 
 @kwdef struct FunctionSpec
-    nodename::String
-    funcname::String
-    args::Union{Array{Any, 1}, Nothing} = []
-    kwargs::Dict{String, Any} = Dict{String, Any}()
-    priority::Int64
-    maxwaittime::Int64
-    maxexectime::Int64
-    maxretries::Int64
+    nodename::String = ""
+    funcname::String = ""
+    args::Union{Array{Any, 1}, Nothing} = [] 
+    kwargs::Dict{String, Any} = Dict{Any, Any}()
+    priority::Int64 = 0
+    maxwaittime::Int64 = 0
+    maxexectime::Int64 = 60
+    maxretries::Int64 = 3
     conditions::Conditions
-    label::String
+    label::String = ""
     fs::Filesystem = Filesystem()
-    env::Dict{String, String} = Dict{String, String}()
+    env::Dict{String, String} = Dict{Any, Any}()
 
 	function FunctionSpec(
 		nodename::String, 
