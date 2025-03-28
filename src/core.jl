@@ -202,8 +202,8 @@ end
 @kwdef struct FunctionSpec
     nodename::String = ""
     funcname::String = ""
-    args::Union{Array{Any, 1}, Nothing} = [] 
-    kwargs::Dict{String, Any} = Dict{Any, Any}()
+    args::Union{Array{String, 1}, Nothing} = []     # Structmapping can't handle Union{Array{Any, 1}, Nothing}
+    kwargs::Dict{String, Any} = Dict{String, Any}()
     priority::Int64 = 0
     maxwaittime::Int64 = 0
     maxexectime::Int64 = 60
@@ -211,79 +211,7 @@ end
     conditions::Conditions
     label::String = ""
     fs::Filesystem = Filesystem()
-    env::Dict{String, String} = Dict{Any, Any}()
-
-	function FunctionSpec(
-		nodename::String, 
-		funcname::String, 
-		args::Union{Array{Any, 1}, Nothing}, 
-		kwargs::Dict{Any, Any}, 
-		priority::Int64, 
-		maxwaittime::Int64, 
-		maxexectime::Int64, 
-		maxretries::Int64, 
-		conditions::Conditions, 
-		label::String, 
-		fs::Filesystem, 
-		env::Dict{Any, Any}
-	)
-		new(nodename, funcname, args, kwargs, priority, maxwaittime, maxexectime, maxretries, conditions, label, fs, env)
-	end
-
-    function FunctionSpec(
-        nodename::String,
-        funcname::String,
-        args::Union{Array{String, 1}, Nothing},
-        priority::Int64,
-        maxwaittime::Int64,
-        maxexectime::Int64,
-        maxretries::Int64,
-        conditions::Conditions,
-        label::String,
-        env::Dict{String, String}
-    )
-        new(
-            nodename,
-            funcname,
-            args,
-            Dict{String, Any}(),
-            priority,
-            maxwaittime,
-            maxexectime,
-            maxretries,
-            conditions,
-            label,
-            Filesystem(),
-            Dict{String, String}(k => string(v) for (k, v) in env)
-        )
-    end
-    
-	function FunctionSpec(
-        nodename::String,
-        funcname::String,
-        args::Union{Array{String, 1}, Nothing},
-        priority::Int64,
-        maxwaittime::Int64,
-        maxexectime::Int64,
-        maxretries::Int64,
-        conditions::Conditions,
-        label::String
-    )
-        new(
-            nodename,
-            funcname,
-            args,
-            Dict{String, Any}(),
-            priority,
-            maxwaittime,
-            maxexectime,
-            maxretries,
-            conditions,
-            label,
-            Filesystem(),
-			Dict{String, String}())
-        
-    end
+    env::Dict{String, String} = Dict{String, String}()
 end
 
 Base.@kwdef struct Attribute

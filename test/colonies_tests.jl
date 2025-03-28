@@ -113,13 +113,22 @@ function test_submit()
     colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
-
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
 	env = Dict{String, String}()
     env["args"] = "test_args"
-	
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "", env)
-	added_process = Colonies.submit(client, funcspec, executor_prvkey)
+
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_proc",
+        args = ["test_arg1", "test_arg2", "test_arg3"],
+        priority = 50,
+        maxwaittime = -1,
+        maxexectime = 3600,
+        maxretries = 1,
+        conditions = conditions,
+        label = "test_label",
+        env = env)
+    added_process = Colonies.submit(client, funcspec, executor_prvkey)
 
     length(added_process.processid) == 64
 end
@@ -140,7 +149,17 @@ function test_getprocess()
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
 	env = Dict{String, String}()
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
     added_process = Colonies.submit(client, funcspec, executor_prvkey)
 
     process_from_server = Colonies.getprocess(client, added_process.processid, executor_prvkey)
@@ -152,7 +171,17 @@ function test_getprocesses()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
     Colonies.submit(client, funcspec, executor_prvkey)
     Colonies.submit(client, funcspec, executor_prvkey)
 
@@ -165,11 +194,101 @@ function test_assign()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
     added_process = Colonies.submit(client, funcspec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)  # wait max 10 seconds for an assignment
     assigned_process.processid == added_process.processid
+end
+
+function test_unmarshal()
+
+    payload="""
+    {
+        "processid":"aeadb23995409ed35ce8cb6c54f0659ac89d07503cc2f80e5a6941bf694247ea",
+        "initiatorid":"3fc05cf3df4b494e95d6a3d297a34f19938f7daa7422ab0d4f794454133341ac",
+        "initiatorname":"initiator",
+        "assignedexecutorid":"8a60e7414a36c5b8c36e0d165c6734fb0ab52d57a538b8af2025ad16c9151d71",
+        "isassigned":true,
+        "state":1,
+        "prioritytime":1742982430593794312,
+        "submissiontime":"2025-03-26T10:47:10.593794+01:00",
+        "starttime":"2025-03-26T13:54:30.68260703Z",
+        "endtime":"2025-03-26T14:50:13.299076+01:00",
+        "waitdeadline":"0001-01-01T00:53:28+00:53",
+        "execdeadline":"2025-03-26T14:50:12.562314+01:00",
+        "retries":5,
+        "attributes":[],
+        "spec":{
+            "nodename":"nodename",
+            "funcname":"funcname",
+            "args":[
+                "48d3d16c-0a27-11f0-ab0d-5eb9e77fccdd,1611615602816220273",
+                "48dacc1a-0a27-11f0-ab0d-5eb9e77fccdd,1611615602819340322",
+                "48ddbd1c-0a27-11f0-ab0d-5eb9e77fccdd,1611615602848220274"
+                ],
+            "kwargs":{},
+            "priority":0,
+            "maxwaittime":0,
+            "maxexectime":300,
+            "maxretries":5,
+            "conditions":{
+                "colonyname":"colonyname",
+                "executornames": ["executorname1", "executorname2"],
+                "executortype":"executortype",
+                "dependencies":[],
+                "nodes":0,
+                "cpu":"0m",
+                "processes":0,
+                "processespernode":0,
+                "mem":"0Mi",
+                "storage":"0Mi",
+                "gpu":{
+                    "name":"",
+                    "mem":"0Mi",
+                    "count":0,
+                    "nodecount":0
+                },
+                "walltime":0
+            },
+            "label":"label",
+            "fs":{
+                "mount":"",
+                "snapshots":null,
+                "dirs":null
+            },
+            "env":{}
+        },
+        "waitforparents":false,
+        "parents":[],
+        "children":[],
+        "processgraphid":"449db1dfe4ef50a1c1d3535b03b5b036dc38026a21be84a7fa0a0720d906c53e",
+        "in":[],
+        "out":[],
+        "errors":[]
+    }"""
+
+    process = Colonies.unmarshaljson(payload, Colonies.Process)
+    process.processid == "aeadb23995409ed35ce8cb6c54f0659ac89d07503cc2f80e5a6941bf694247ea"
+    process.initiatorid == "3fc05cf3df4b494e95d6a3d297a34f19938f7daa7422ab0d4f794454133341ac"
+    process.initiatorname == "initiator"
+    process.spec.funcname == "funcname"
+    process.spec.conditions.executortype == "executortype"
+    process.spec.args == [
+        "48d3d16c-0a27-11f0-ab0d-5eb9e77fccdd,1611615602816220273",
+        "48dacc1a-0a27-11f0-ab0d-5eb9e77fccdd,1611615602819340322",
+        "48ddbd1c-0a27-11f0-ab0d-5eb9e77fccdd,1611615602848220274"
+    ]
 end
 
 function test_addattribute()
@@ -177,8 +296,18 @@ function test_addattribute()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
-    added_process = Colonies.submit(client, funcspec, executor_prvkey)
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
+    Colonies.submit(client, funcspec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
     attribute = Colonies.Attribute(assigned_process.processid, colonyname, "test_result", "test_result_value")
@@ -192,8 +321,18 @@ function test_closeprocess_successful()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
-    added_process = Colonies.submit(client, funcspec, executor_prvkey)
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
+    Colonies.submit(client, funcspec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
     Colonies.closeprocess(client, assigned_process.processid, executor_prvkey)
@@ -207,8 +346,18 @@ function test_closeprocess_failed()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
-    added_process = Colonies.submit(client, funcspec, executor_prvkey)
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
+    Colonies.submit(client, funcspec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
     Colonies.failprocess(client, assigned_process.processid, executor_prvkey)
@@ -222,8 +371,18 @@ function test_addlog()
     executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
 
     conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
-    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
-    added_process = Colonies.submit(client, funcspec, executor_prvkey)
+    funcspec = Colonies.FunctionSpec(
+        nodename = "test_proc",
+        funcname = "test_func",
+        args = String[],
+        priority = 1,
+        maxwaittime = -1,
+        maxexectime = -1,
+        maxretries = -1,
+        conditions = conditions,
+        label = "")
+
+    Colonies.submit(client, funcspec, executor_prvkey)
 
     assigned_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
 
@@ -247,6 +406,7 @@ end
 		@test test_getprocess()
 		@test test_getprocesses()
         @test test_assign()
+        @test test_unmarshal()
         @test test_addattribute()
         @test test_closeprocess_successful()
         @test test_closeprocess_failed()
