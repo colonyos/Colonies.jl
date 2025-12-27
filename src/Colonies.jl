@@ -573,7 +573,7 @@ function submitworkflow(client::ColoniesClient, colonyname::String, functionspec
 
     msg = Dict(
         "msgtype" => "submitworkflowspecmsg",
-        "workflow" => workflow
+        "spec" => workflow
     )
     rpcjson = JSON.json(msg)
 
