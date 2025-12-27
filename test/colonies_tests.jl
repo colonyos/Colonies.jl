@@ -1,9 +1,3 @@
-using Base: add_with_overflow
-using Pkg
-using Test
-
-Pkg.activate("..")
-
 using Test
 using Colonies
 using Colonies.Crypto
