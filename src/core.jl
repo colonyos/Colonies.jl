@@ -23,7 +23,7 @@ Base.@kwdef struct Location
 	desc::String
 end
 
-Base.@kwdef struct GPU 
+Base.@kwdef struct GPU
 	name::String = ""
 	mem::String = ""
 	count::Int64 = 0
@@ -38,37 +38,38 @@ Base.@kwdef struct GPU
 	end
 end
 
-Base.@kwdef struct Hardware 
-    model::String
-	nodes::Int64
-	cpu::String
-	mem::String
-	storage::String
-	gpu::GPU
+Base.@kwdef struct Hardware
+    model::String = ""
+	nodes::Int64 = 0
+	cpu::String = ""
+	mem::String = ""
+	storage::String = ""
+	gpu::GPU = GPU()
 end
 
 Base.@kwdef struct Software
-	name::String
-	type::String
-	version::String
+	name::String = ""
+	swtype::String = ""
+	version::String = ""
 end
 
-Base.@kwdef struct Capabilities 
-    hardware::Hardware
-    software::Software
+# Capabilities uses arrays to match Go server format
+Base.@kwdef struct Capabilities
+    hardware::Vector{Hardware} = Hardware[]
+    software::Vector{Software} = Software[]
 end
 
 Base.@kwdef struct Project
-    allocatedcpu::Int64
-	usedcpu::Int64
-	allocagtedgpu::Int64
-	usedgpu::Int64
-	allocatedstorage::Int64
-	usedstorage::Int64
+    allocatedcpu::Int64 = 0
+	usedcpu::Int64 = 0
+	allocatedgpu::Int64 = 0
+	usedgpu::Int64 = 0
+	allocatedstorage::Int64 = 0
+	usedstorage::Int64 = 0
 end
 
 Base.@kwdef struct Allocations
-	projects::Dict{String, Project}
+	projects::Dict{String, Project} = Dict{String, Project}()
 end
 
 Base.@kwdef struct Executor
@@ -76,20 +77,20 @@ Base.@kwdef struct Executor
     executortype::String
     executorname::String
     colonyname::String
-    state::Int64
-    requirefuncreg::Bool
-    commissiontime::String
-    lastheardfromtime::String
-    location::Location
-	capabilities::Capabilities
-	allocations::Allocations
+    state::Int64 = PENDING
+    requirefuncreg::Bool = false
+    commissiontime::String = ""
+    lastheardfromtime::String = ""
+    locationname::String = ""
+	capabilities::Capabilities = Capabilities()
+	allocations::Allocations = Allocations()
 
     function Executor(executorid::String, executortype::String, executorname::String, colonyname::String)
-        new(executorid, executortype, executorname, colonyname, Colonies.PENDING, false, "2022-08-08T10:22:25.819199495+02:00", "2022-08-08T10:22:25.819199495+02:00", Location(0.0, 0.0, ""), Capabilities(Hardware("", 0, "  ", "", "", GPU("", "", 0, 0)), Software("", "", "")), Allocations(Dict{String, Project}()))
+        new(executorid, executortype, executorname, colonyname, PENDING, false, "", "", "", Capabilities(), Allocations())
     end
 
-    function Executor(executorid::String, executortype::String, executorname::String, colonyname::String, state::Int64, requirefuncreg::Bool, commissiontime::String, lastheardfromtime::String, location::Location, capabilities::Capabilities, allocations::Allocations)
-        new(executorid, executortype, executorname, colonyname, state, requirefuncreg, commissiontime, lastheardfromtime, location, capabilities, allocations)
+    function Executor(executorid::String, executortype::String, executorname::String, colonyname::String, state::Int64, requirefuncreg::Bool, commissiontime::String, lastheardfromtime::String, locationname::String, capabilities::Capabilities, allocations::Allocations)
+        new(executorid, executortype, executorname, colonyname, state, requirefuncreg, commissiontime, lastheardfromtime, locationname, capabilities, allocations)
     end
 end
 

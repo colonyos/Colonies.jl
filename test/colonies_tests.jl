@@ -87,16 +87,16 @@ function test_addexecutor_duplicate_name()
 
 		executor = Executor(
     		executorid,
-    		"test_executor_type", 
-    		name, 
-    		colonyname, 
-    		Colonies.PENDING, 
-    		false, 
-    		"2024-07-14T11:55:00.119702+02:00", 
-    		"2022-08-08T10:22:25.819199+02:00", 
-    		Location(0.0, 0.0, ""), 
-    		Capabilities(Hardware("", 0, "", "", "", GPU("", "", 0, 0)), Software("", "", "")), 
-    		Allocations(Dict{String, Project}())
+    		"test_executor_type",
+    		name,
+    		colonyname,
+    		Colonies.PENDING,
+    		false,
+    		"2024-07-14T11:55:00.119702+02:00",
+    		"2022-08-08T10:22:25.819199+02:00",
+    		"",
+    		Capabilities(),
+    		Allocations()
 		)
 
 
