@@ -92,56 +92,155 @@ function approveexecutor(client::ColoniesClient, colonyname::String, executornam
 end
 
 function submit(client::ColoniesClient, spec::FunctionSpec, prvkey::String)
-    rpcmsg = SubmitFunctionSpecRPC(spec, "submitfuncspecmsg")
-    rpcjson = marshaljson(rpcmsg)
+    # Build conditions dict
+    conditions_dict = Dict{String, Any}(
+        "colonyname" => spec.conditions.colonyname,
+        "executortype" => spec.conditions.executortype
+    )
+    if !isempty(spec.conditions.executornames)
+        conditions_dict["executornames"] = spec.conditions.executornames
+    end
+    if !isempty(spec.conditions.dependencies)
+        conditions_dict["dependencies"] = spec.conditions.dependencies
+    end
+
+    # Build spec dict
+    spec_dict = Dict{String, Any}(
+        "nodename" => spec.nodename,
+        "funcname" => spec.funcname,
+        "args" => spec.args === nothing ? [] : spec.args,
+        "kwargs" => spec.kwargs,
+        "priority" => spec.priority,
+        "maxwaittime" => spec.maxwaittime,
+        "maxexectime" => spec.maxexectime,
+        "maxretries" => spec.maxretries,
+        "conditions" => conditions_dict,
+        "label" => spec.label,
+        "env" => spec.env
+    )
+
+    msg = Dict(
+        "msgtype" => "submitfuncspecmsg",
+        "spec" => spec_dict
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
     rpcmsg = RPCMsg(sig, "submitfuncspecmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-	unmarshaljson(payload, Process)
+    parse_process_result(payload)
+end
+
+# Helper to parse process response into ProcessResult
+function parse_process_result(payload::String)
+    dict = JSON.parse(payload)
+    result = ProcessResult()
+    result.processid = get(dict, "processid", "")
+    result.state = get(dict, "state", 0)
+    result.spec = get(dict, "spec", Dict{String, Any}())
+    result.output = get(dict, "out", [])
+    result.errors = get(dict, "errors", [])
+    result
 end
 
 function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FunctionSpec, prvkey::String)
-    rpcmsg = AddChildRPC(processgraphid, processid, spec, "addchildmsg")
-    rpcjson = marshaljson(rpcmsg)
+    # Build conditions dict
+    conditions_dict = Dict{String, Any}(
+        "colonyname" => spec.conditions.colonyname,
+        "executortype" => spec.conditions.executortype
+    )
+
+    # Build spec dict
+    spec_dict = Dict{String, Any}(
+        "nodename" => spec.nodename,
+        "funcname" => spec.funcname,
+        "args" => spec.args === nothing ? [] : spec.args,
+        "kwargs" => spec.kwargs,
+        "priority" => spec.priority,
+        "maxwaittime" => spec.maxwaittime,
+        "maxexectime" => spec.maxexectime,
+        "maxretries" => spec.maxretries,
+        "conditions" => conditions_dict,
+        "label" => spec.label,
+        "env" => spec.env
+    )
+
+    msg = Dict(
+        "msgtype" => "addchildmsg",
+        "processgraphid" => processgraphid,
+        "parentprocessid" => processid,
+        "childprocessid" => "",
+        "spec" => spec_dict,
+        "insert" => false
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
     rpcmsg = RPCMsg(sig, "addchildmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-    unmarshaljson(payload, Process)
+    parse_process_result(payload)
 end
 
 function getprocess(client::ColoniesClient, processid::String, prvkey::String)
-    rpcmsg = GetProcessRPC(processid, "getprocessmsg")
-    rpcjson = marshaljson(rpcmsg)
+    msg = Dict(
+        "msgtype" => "getprocessmsg",
+        "processid" => processid
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
     rpcmsg = RPCMsg(sig, "getprocessmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-    unmarshaljson(payload, Process)
+    parse_process_result(payload)
 end
 
 function getprocesses(client::ColoniesClient, colonyname::String, state::Int64, count::Int64, prvkey::String)
-    rpcmsg = GetProcessesRPC(colonyname, state, count, "getprocessesmsg")
-    rpcjson = marshaljson(rpcmsg)
+    msg = Dict(
+        "msgtype" => "getprocessesmsg",
+        "colonyname" => colonyname,
+        "state" => state,
+        "count" => count
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
     rpcmsg = RPCMsg(sig, "getprocessesmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
-    unmarshaljson(payload, AbstractArray{Process})
+    # Parse array of processes
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return ProcessResult[]
+    end
+    [parse_process_dict(p) for p in arr]
+end
+
+# Helper to parse a single process dict
+function parse_process_dict(dict::AbstractDict)
+    result = ProcessResult()
+    result.processid = get(dict, "processid", "")
+    result.state = get(dict, "state", 0)
+    result.spec = get(dict, "spec", Dict{String, Any}())
+    result.output = get(dict, "out", [])
+    result.errors = get(dict, "errors", [])
+    result
 end
 
 function assign(client::ColoniesClient, colonyname::String, timeout::Int64, prvkey::String)
-    rpcmsg = AssignProcessRPC(colonyname, false, timeout, "assignprocessmsg")
-    rpcjson = marshaljson(rpcmsg)
+    msg = Dict(
+        "msgtype" => "assignprocessmsg",
+        "colonyname" => colonyname,
+        "latest" => false,
+        "timeout" => timeout
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
@@ -150,7 +249,7 @@ function assign(client::ColoniesClient, colonyname::String, timeout::Int64, prvk
     try
         payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
         if payloadtype == "assignprocessmsg"
-            unmarshaljson(payload, Process)
+            parse_process_result(payload)
         elseif payloadtype == "error"
             throw(unmarshaljson(payload, ColoniesError))
         else

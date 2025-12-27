@@ -94,6 +94,15 @@ Base.@kwdef struct Executor
     end
 end
 
+# Simple process result that uses Dict for spec to avoid complex nested struct parsing
+Base.@kwdef mutable struct ProcessResult
+    processid::String = ""
+    state::Int = 0
+    spec::Dict{String, Any} = Dict{String, Any}()
+    output::Vector{Any} = []
+    errors::Vector{Any} = []
+end
+
 Base.@kwdef struct Function
     functionid::String
     executorname::String
