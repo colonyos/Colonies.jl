@@ -6,7 +6,7 @@ function marshaljson(object::Any)
 end
 
 function unmarshaljson(jsonstr::String, structtarget::Any)
-    try 
+    try
       res = JSON.parse(jsonstr)
       if typeof(res) <: AbstractArray
         cleaned_res = similar(res)
@@ -26,20 +26,21 @@ function unmarshaljson(jsonstr::String, structtarget::Any)
 end
 
 function unmarshaljson2dict(jsonstr::String)
-    try 
+    try
       JSON.parse(jsonstr)
     catch err
       @error err
     end
 end
 
-function rm_nothing(dict::Dict)
-    res_dict = Dict()
+# Handle both Dict and JSON.Object (from JSON.jl v1.3.0+)
+function rm_nothing(dict::AbstractDict)
+    res_dict = Dict{String, Any}()
     for k in keys(dict)
-        if typeof(dict[k]) <: Dict
-            res_dict[k] = deepcopy(rm_nothing(dict[k]))
+        if typeof(dict[k]) <: AbstractDict
+            res_dict[String(k)] = deepcopy(rm_nothing(dict[k]))
         elseif dict[k] !== nothing
-            res_dict[k] = dict[k]
+            res_dict[String(k)] = dict[k]
         end
     end
     res_dict

@@ -47,8 +47,18 @@ function addcolony(client::ColoniesClient, colony::Colony, prvkey::String)
 end
 
 function addexecutor(client::ColoniesClient, executor::Executor, prvkey::String)
-    rpcmsg = AddExecutorRPC(executor, "addexecutormsg")
-    rpcjson = marshaljson(rpcmsg)
+    # Use minimal dict format like Python SDK
+    executor_dict = Dict(
+        "executorname" => executor.executorname,
+        "executorid" => executor.executorid,
+        "colonyname" => executor.colonyname,
+        "executortype" => executor.executortype
+    )
+    msg = Dict(
+        "msgtype" => "addexecutormsg",
+        "executor" => executor_dict
+    )
+    rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
