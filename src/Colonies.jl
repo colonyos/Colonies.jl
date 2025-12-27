@@ -357,5 +357,679 @@ function wait(client::ColoniesClient, process::Process, timeout, prvkey)
     end
 end
 
+# ============================================================================
+# Colony Management
+# ============================================================================
+
+function getcolony(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getcolonymsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getcolonymsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Colony)
+end
+
+function getcolonies(client::ColoniesClient, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getcoloniesmsg"
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getcoloniesmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return Colony[]
+    end
+    [unmarshaljson(JSON.json(c), Colony) for c in arr]
+end
+
+function removecolony(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removecolonymsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removecolonymsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+# ============================================================================
+# Executor Management
+# ============================================================================
+
+function getexecutor(client::ColoniesClient, colonyname::String, executorname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getexecutormsg",
+        "colonyname" => colonyname,
+        "executorname" => executorname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getexecutormsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    unmarshaljson(payload, Executor)
+end
+
+function getexecutors(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getexecutorsmsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getexecutorsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return Executor[]
+    end
+    [unmarshaljson(JSON.json(e), Executor) for e in arr]
+end
+
+function rejectexecutor(client::ColoniesClient, colonyname::String, executorname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "rejectexecutormsg",
+        "colonyname" => colonyname,
+        "executorname" => executorname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "rejectexecutormsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function removeexecutor(client::ColoniesClient, colonyname::String, executorname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removeexecutormsg",
+        "colonyname" => colonyname,
+        "executorname" => executorname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeexecutormsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+# ============================================================================
+# Process Management
+# ============================================================================
+
+function removeprocess(client::ColoniesClient, processid::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removeprocessmsg",
+        "processid" => processid,
+        "all" => false
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeprocessmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function removeallprocesses(client::ColoniesClient, colonyname::String, prvkey::String; state::Int64=-1)
+    msg = Dict(
+        "msgtype" => "removeallprocessesmsg",
+        "colonyname" => colonyname,
+        "state" => state
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeallprocessesmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function setoutput(client::ColoniesClient, processid::String, output::Vector, prvkey::String)
+    msg = Dict(
+        "msgtype" => "setoutputmsg",
+        "processid" => processid,
+        "out" => output
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "setoutputmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+# ============================================================================
+# Workflow/ProcessGraph Management
+# ============================================================================
+
+function submitworkflow(client::ColoniesClient, colonyname::String, functionspecs::Vector{FunctionSpec}, prvkey::String)
+    specs_arr = []
+    for spec in functionspecs
+        conditions_dict = Dict{String, Any}(
+            "colonyname" => spec.conditions.colonyname,
+            "executortype" => spec.conditions.executortype
+        )
+        if !isempty(spec.conditions.executornames)
+            conditions_dict["executornames"] = spec.conditions.executornames
+        end
+        if !isempty(spec.conditions.dependencies)
+            conditions_dict["dependencies"] = spec.conditions.dependencies
+        end
+
+        spec_dict = Dict{String, Any}(
+            "nodename" => spec.nodename,
+            "funcname" => spec.funcname,
+            "args" => spec.args === nothing ? [] : spec.args,
+            "kwargs" => spec.kwargs,
+            "priority" => spec.priority,
+            "maxwaittime" => spec.maxwaittime,
+            "maxexectime" => spec.maxexectime,
+            "maxretries" => spec.maxretries,
+            "conditions" => conditions_dict,
+            "label" => spec.label,
+            "env" => spec.env
+        )
+        push!(specs_arr, spec_dict)
+    end
+
+    workflow = Dict(
+        "colonyname" => colonyname,
+        "functionspecs" => specs_arr
+    )
+
+    msg = Dict(
+        "msgtype" => "submitworkflowspecmsg",
+        "workflow" => workflow
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "submitworkflowspecmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_processgraph(payload)
+end
+
+function parse_processgraph(payload::String)
+    dict = JSON.parse(payload)
+    ProcessGraph(
+        get(dict, "processgraphid", ""),
+        get(dict, "colonyname", ""),
+        get(dict, "state", 0),
+        get(dict, "rootprocessids", String[]),
+        get(dict, "processids", String[])
+    )
+end
+
+function getprocessgraph(client::ColoniesClient, processgraphid::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getprocessgraphmsg",
+        "processgraphid" => processgraphid
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getprocessgraphmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_processgraph(payload)
+end
+
+function getprocessgraphs(client::ColoniesClient, colonyname::String, count::Int64, prvkey::String; state::Int64=-1)
+    msg = Dict(
+        "msgtype" => "getprocessgraphsmsg",
+        "colonyname" => colonyname,
+        "count" => count,
+        "state" => state
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getprocessgraphsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return ProcessGraph[]
+    end
+    [parse_processgraph(JSON.json(pg)) for pg in arr]
+end
+
+function removeprocessgraph(client::ColoniesClient, processgraphid::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removeprocessgraphmsg",
+        "processgraphid" => processgraphid
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeprocessgraphmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function removeallprocessgraphs(client::ColoniesClient, colonyname::String, prvkey::String; state::Int64=-1)
+    msg = Dict(
+        "msgtype" => "removeallprocessgraphsmsg",
+        "colonyname" => colonyname,
+        "state" => state
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeallprocessgraphsmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+# ============================================================================
+# Functions
+# ============================================================================
+
+function getfunctions(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getfunctionsmsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getfunctionsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return Function[]
+    end
+    [unmarshaljson(JSON.json(f), Function) for f in arr]
+end
+
+# ============================================================================
+# Statistics
+# ============================================================================
+
+function getstats(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getstatisticsmsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getstatisticsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    dict = JSON.parse(payload)
+    Statistics(
+        get(dict, "colonies", 0),
+        get(dict, "executors", 0),
+        get(dict, "waitingprocesses", 0),
+        get(dict, "runningprocesses", 0),
+        get(dict, "successfulprocesses", 0),
+        get(dict, "failedprocesses", 0),
+        get(dict, "waitingworkflows", 0),
+        get(dict, "runningworkflows", 0),
+        get(dict, "successfulworkflows", 0),
+        get(dict, "failedworkflows", 0)
+    )
+end
+
+# ============================================================================
+# Channels
+# ============================================================================
+
+function channelappend(client::ColoniesClient, processid::String, channel_name::String, sequence::Int64, data::String, prvkey::String; msgtype::String="data", inreplyto::Int64=0)
+    msg = Dict(
+        "msgtype" => "channelappendmsg",
+        "processid" => processid,
+        "name" => channel_name,
+        "sequence" => sequence,
+        "data" => data,
+        "type" => msgtype,
+        "inreplyto" => inreplyto
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "channelappendmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function channelread(client::ColoniesClient, processid::String, channel_name::String, after_seq::Int64, limit::Int64, prvkey::String)
+    msg = Dict(
+        "msgtype" => "channelreadmsg",
+        "processid" => processid,
+        "name" => channel_name,
+        "afterseq" => after_seq,
+        "limit" => limit
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "channelreadmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return ChannelEntry[]
+    end
+    entries = ChannelEntry[]
+    for entry in arr
+        push!(entries, ChannelEntry(
+            get(entry, "sequence", 0),
+            get(entry, "data", ""),
+            get(entry, "type", "data"),
+            get(entry, "inreplyto", 0)
+        ))
+    end
+    entries
+end
+
+# ============================================================================
+# Blueprint Definitions
+# ============================================================================
+
+function addblueprintdefinition(client::ColoniesClient, definition::BlueprintDefinition, prvkey::String)
+    def_dict = Dict(
+        "name" => definition.name,
+        "colonyname" => definition.colonyname,
+        "kind" => definition.kind,
+        "executortype" => definition.executortype,
+        "specschema" => definition.specschema,
+        "statusschema" => definition.statusschema
+    )
+    msg = Dict(
+        "msgtype" => "addblueprintdefinitionmsg",
+        "blueprintdefinition" => def_dict
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addblueprintdefinitionmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_blueprintdefinition(payload)
+end
+
+function parse_blueprintdefinition(payload::String)
+    dict = JSON.parse(payload)
+    BlueprintDefinition(
+        get(dict, "name", ""),
+        get(dict, "colonyname", ""),
+        get(dict, "kind", ""),
+        get(dict, "executortype", ""),
+        get(dict, "specschema", Dict{String, Any}()),
+        get(dict, "statusschema", Dict{String, Any}())
+    )
+end
+
+function getblueprintdefinition(client::ColoniesClient, colonyname::String, name::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getblueprintdefinitionmsg",
+        "colonyname" => colonyname,
+        "name" => name
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getblueprintdefinitionmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_blueprintdefinition(payload)
+end
+
+function getblueprintdefinitions(client::ColoniesClient, colonyname::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getblueprintdefinitionsmsg",
+        "colonyname" => colonyname
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getblueprintdefinitionsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return BlueprintDefinition[]
+    end
+    [parse_blueprintdefinition(JSON.json(d)) for d in arr]
+end
+
+function removeblueprintdefinition(client::ColoniesClient, colonyname::String, name::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removeblueprintdefinitionmsg",
+        "colonyname" => colonyname,
+        "name" => name
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeblueprintdefinitionmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+# ============================================================================
+# Blueprints
+# ============================================================================
+
+function addblueprint(client::ColoniesClient, blueprint::Blueprint, prvkey::String)
+    bp_dict = Dict(
+        "kind" => blueprint.kind,
+        "metadata" => Dict(
+            "name" => blueprint.metadata.name,
+            "colonyname" => blueprint.metadata.colonyname
+        ),
+        "handler" => Dict(
+            "executortype" => blueprint.handler.executortype
+        ),
+        "spec" => blueprint.spec,
+        "status" => blueprint.status
+    )
+    msg = Dict(
+        "msgtype" => "addblueprintmsg",
+        "blueprint" => bp_dict
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "addblueprintmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_blueprint(payload)
+end
+
+function parse_blueprint(payload::String)
+    dict = JSON.parse(payload)
+    metadata_dict = get(dict, "metadata", Dict{String, Any}())
+    handler_dict = get(dict, "handler", Dict{String, Any}())
+    Blueprint(
+        get(dict, "blueprintid", ""),
+        get(dict, "kind", ""),
+        BlueprintMetadata(
+            get(metadata_dict, "name", ""),
+            get(metadata_dict, "colonyname", "")
+        ),
+        BlueprintHandler(
+            get(handler_dict, "executortype", "")
+        ),
+        get(dict, "spec", Dict{String, Any}()),
+        get(dict, "status", Dict{String, Any}()),
+        get(dict, "generation", 0),
+        get(dict, "reconciledgeneration", 0),
+        get(dict, "lastreconciled", "")
+    )
+end
+
+function getblueprint(client::ColoniesClient, colonyname::String, name::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "getblueprintmsg",
+        "colonyname" => colonyname,
+        "name" => name
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getblueprintmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_blueprint(payload)
+end
+
+function getblueprints(client::ColoniesClient, colonyname::String, prvkey::String; kind::String="", location::String="")
+    msg = Dict(
+        "msgtype" => "getblueprintsmsg",
+        "colonyname" => colonyname,
+        "kind" => kind,
+        "location" => location
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "getblueprintsmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    arr = JSON.parse(payload)
+    if arr === nothing
+        return Blueprint[]
+    end
+    [parse_blueprint(JSON.json(bp)) for bp in arr]
+end
+
+function updateblueprint(client::ColoniesClient, blueprint::Blueprint, prvkey::String; forcegeneration::Bool=false)
+    bp_dict = Dict(
+        "blueprintid" => blueprint.blueprintid,
+        "kind" => blueprint.kind,
+        "metadata" => Dict(
+            "name" => blueprint.metadata.name,
+            "colonyname" => blueprint.metadata.colonyname
+        ),
+        "handler" => Dict(
+            "executortype" => blueprint.handler.executortype
+        ),
+        "spec" => blueprint.spec,
+        "status" => blueprint.status
+    )
+    msg = Dict(
+        "msgtype" => "updateblueprintmsg",
+        "blueprint" => bp_dict,
+        "forcegeneration" => forcegeneration
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "updateblueprintmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_blueprint(payload)
+end
+
+function removeblueprint(client::ColoniesClient, colonyname::String, name::String, prvkey::String)
+    msg = Dict(
+        "msgtype" => "removeblueprintmsg",
+        "colonyname" => colonyname,
+        "name" => name
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "removeblueprintmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function updateblueprintstatus(client::ColoniesClient, colonyname::String, name::String, status::Dict{String, Any}, prvkey::String)
+    msg = Dict(
+        "msgtype" => "updateblueprintstatusmsg",
+        "colonyname" => colonyname,
+        "name" => name,
+        "status" => status
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "updateblueprintstatusmsg", payload)
+
+    sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    nothing
+end
+
+function reconcileblueprint(client::ColoniesClient, colonyname::String, name::String, prvkey::String; force::Bool=false)
+    msg = Dict(
+        "msgtype" => "reconcileblueprintmsg",
+        "colonyname" => colonyname,
+        "name" => name,
+        "force" => force
+    )
+    rpcjson = JSON.json(msg)
+
+    payload = base64enc(rpcjson)
+    sig = Crypto.sign(payload, prvkey)
+    rpcmsg = RPCMsg(sig, "reconcileblueprintmsg", payload)
+
+    payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
+    parse_process_result(payload)
+end
+
 end
 

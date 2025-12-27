@@ -348,3 +348,68 @@ function get_attr_value(process::Process, key::String)
     end
     return ""
 end
+
+# ProcessGraph represents a workflow DAG
+Base.@kwdef struct ProcessGraph
+    processgraphid::String = ""
+    colonyname::String = ""
+    state::Int64 = 0
+    rootprocessids::Vector{String} = String[]
+    processids::Vector{String} = String[]
+end
+
+# Statistics contains colony statistics
+Base.@kwdef struct Statistics
+    colonies::Int64 = 0
+    executors::Int64 = 0
+    waitingprocesses::Int64 = 0
+    runningprocesses::Int64 = 0
+    successfulprocesses::Int64 = 0
+    failedprocesses::Int64 = 0
+    waitingworkflows::Int64 = 0
+    runningworkflows::Int64 = 0
+    successfulworkflows::Int64 = 0
+    failedworkflows::Int64 = 0
+end
+
+# ChannelEntry represents a message in a channel
+Base.@kwdef struct ChannelEntry
+    sequence::Int64 = 0
+    data::String = ""
+    msgtype::String = "data"
+    inreplyto::Int64 = 0
+end
+
+# BlueprintDefinition defines a blueprint type
+Base.@kwdef struct BlueprintDefinition
+    name::String = ""
+    colonyname::String = ""
+    kind::String = ""
+    executortype::String = ""
+    specschema::Dict{String, Any} = Dict{String, Any}()
+    statusschema::Dict{String, Any} = Dict{String, Any}()
+end
+
+# BlueprintHandler defines which executor handles the blueprint
+Base.@kwdef struct BlueprintHandler
+    executortype::String = ""
+end
+
+# BlueprintMetadata contains blueprint metadata
+Base.@kwdef struct BlueprintMetadata
+    name::String = ""
+    colonyname::String = ""
+end
+
+# Blueprint represents a blueprint instance
+Base.@kwdef struct Blueprint
+    blueprintid::String = ""
+    kind::String = ""
+    metadata::BlueprintMetadata = BlueprintMetadata()
+    handler::BlueprintHandler = BlueprintHandler()
+    spec::Dict{String, Any} = Dict{String, Any}()
+    status::Dict{String, Any} = Dict{String, Any}()
+    generation::Int64 = 0
+    reconciledgeneration::Int64 = 0
+    lastreconciled::String = ""
+end
