@@ -1,8 +1,4 @@
-using Pkg
 using Test
-
-Pkg.activate("..")
-
 using Colonies
 
 function test_prvkey()
