@@ -612,12 +612,14 @@ function getprocessgraph(client::ColoniesClient, processgraphid::String, prvkey:
 end
 
 function getprocessgraphs(client::ColoniesClient, colonyname::String, count::Int64, prvkey::String; state::Int64=-1)
-    msg = Dict(
+    msg = Dict{String, Any}(
         "msgtype" => "getprocessgraphsmsg",
         "colonyname" => colonyname,
-        "count" => count,
-        "state" => state
+        "count" => count
     )
+    if state >= 0
+        msg["state"] = state
+    end
     rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
@@ -648,11 +650,13 @@ function removeprocessgraph(client::ColoniesClient, processgraphid::String, prvk
 end
 
 function removeallprocessgraphs(client::ColoniesClient, colonyname::String, prvkey::String; state::Int64=-1)
-    msg = Dict(
+    msg = Dict{String, Any}(
         "msgtype" => "removeallprocessgraphsmsg",
-        "colonyname" => colonyname,
-        "state" => state
+        "colonyname" => colonyname
     )
+    if state >= 0
+        msg["state"] = state
+    end
     rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
@@ -692,14 +696,14 @@ end
 
 function getstats(client::ColoniesClient, colonyname::String, prvkey::String)
     msg = Dict(
-        "msgtype" => "getstatisticsmsg",
+        "msgtype" => "getcolonystatsmsg",
         "colonyname" => colonyname
     )
     rpcjson = JSON.json(msg)
 
     payload = base64enc(rpcjson)
     sig = Crypto.sign(payload, prvkey)
-    rpcmsg = RPCMsg(sig, "getstatisticsmsg", payload)
+    rpcmsg = RPCMsg(sig, "getcolonystatsmsg", payload)
 
     payload, payloadtype = sendrpcmsg(rpcmsg, client.protocol, client.host, client.port)
     dict = JSON.parse(payload)
