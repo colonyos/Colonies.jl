@@ -216,31 +216,51 @@ function getprocesses(client::ColoniesClient, colonyname::String, state::Int64, 
     [parse_process_dict(p) for p in arr]
 end
 
+# Helper to get value from dict, returning default if key missing or value is nothing
+function get_or_default(dict::AbstractDict, key::String, default)
+    val = get(dict, key, nothing)
+    val === nothing ? default : val
+end
+
+# Helper to safely convert to Vector{String}, handling nothing
+function to_string_vector(val)
+    val === nothing && return String[]
+    isempty(val) && return String[]
+    convert(Vector{String}, val)
+end
+
+# Helper to safely convert to Vector{Any}, handling nothing
+function to_any_vector(val)
+    val === nothing && return Any[]
+    isempty(val) && return Any[]
+    convert(Vector{Any}, val)
+end
+
 # Helper to parse a single process dict into ProcessResult
 function parse_process_dict(dict::AbstractDict)
     result = ProcessResult()
-    result.processid = get(dict, "processid", "")
-    result.initiatorid = get(dict, "initiatorid", "")
-    result.initiatorname = get(dict, "initiatorname", "")
-    result.assignedexecutorid = get(dict, "assignedexecutorid", "")
-    result.isassigned = get(dict, "isassigned", false)
-    result.state = get(dict, "state", 0)
-    result.prioritytime = get(dict, "prioritytime", 0)
-    result.submissiontime = string(get(dict, "submissiontime", ""))
-    result.starttime = string(get(dict, "starttime", ""))
-    result.endtime = string(get(dict, "endtime", ""))
-    result.waitdeadline = string(get(dict, "waitdeadline", ""))
-    result.execdeadline = string(get(dict, "execdeadline", ""))
-    result.retries = get(dict, "retries", 0)
-    result.attributes = get(dict, "attributes", [])
-    result.spec = get(dict, "spec", Dict{String, Any}())
-    result.waitforparents = get(dict, "waitforparents", false)
-    result.parents = convert(Vector{String}, get(dict, "parents", String[]))
-    result.children = convert(Vector{String}, get(dict, "children", String[]))
-    result.processgraphid = get(dict, "processgraphid", "")
-    result.input = get(dict, "in", [])
-    result.output = get(dict, "out", [])
-    result.errors = get(dict, "errors", [])
+    result.processid = get_or_default(dict, "processid", "")
+    result.initiatorid = get_or_default(dict, "initiatorid", "")
+    result.initiatorname = get_or_default(dict, "initiatorname", "")
+    result.assignedexecutorid = get_or_default(dict, "assignedexecutorid", "")
+    result.isassigned = get_or_default(dict, "isassigned", false)
+    result.state = get_or_default(dict, "state", 0)
+    result.prioritytime = get_or_default(dict, "prioritytime", 0)
+    result.submissiontime = string(get_or_default(dict, "submissiontime", ""))
+    result.starttime = string(get_or_default(dict, "starttime", ""))
+    result.endtime = string(get_or_default(dict, "endtime", ""))
+    result.waitdeadline = string(get_or_default(dict, "waitdeadline", ""))
+    result.execdeadline = string(get_or_default(dict, "execdeadline", ""))
+    result.retries = get_or_default(dict, "retries", 0)
+    result.attributes = to_any_vector(get(dict, "attributes", nothing))
+    result.spec = get_or_default(dict, "spec", Dict{String, Any}())
+    result.waitforparents = get_or_default(dict, "waitforparents", false)
+    result.parents = to_string_vector(get(dict, "parents", nothing))
+    result.children = to_string_vector(get(dict, "children", nothing))
+    result.processgraphid = get_or_default(dict, "processgraphid", "")
+    result.input = to_any_vector(get(dict, "in", nothing))
+    result.output = to_any_vector(get(dict, "out", nothing))
+    result.errors = to_any_vector(get(dict, "errors", nothing))
     result
 end
 
