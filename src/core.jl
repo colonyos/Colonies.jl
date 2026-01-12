@@ -130,15 +130,16 @@ end
     colonyname::String = ""
     executornames::Union{Array{String, 1}, Nothing} = String[]
     executortype::String = ""
+    locationname::String = ""
     dependencies::Union{Array{String, 1}, Nothing} = String[]
     nodes::Int64 = 1
     cpu::String = "1000m"
-    processes::Int64 = 0 
-    processespernode::Int64 = 1 
+    processes::Int64 = 0
+    processespernode::Int64 = 1
     mem::String = "0Gi"
     storage::String = "0Gi"
 	gpu::GPU = GPU("", "", 0, 0)
-    walltime::Int64 = 60 
+    walltime::Int64 = 60
 
     function Conditions(
         colonyname::String,
@@ -146,13 +147,14 @@ end
         executortype::String,
         dependencies::Union{Array{String, 1}, Nothing} = []
     )
-	new(colonyname, executornames, executortype, dependencies, 1, "", 1, 1, "", "", GPU("", "", 0, 0), 0)
+	new(colonyname, executornames, executortype, "", dependencies, 1, "", 1, 1, "", "", GPU("", "", 0, 0), 0)
     end
 
     function Conditions(
         colonyname::String,
         executornames::Union{Array{String, 1}, Nothing},
         executortype::String,
+        locationname::String,
         dependencies::Union{Array{String, 1}, Nothing},
         nodes::Int64,
         cpu::String,
@@ -163,7 +165,7 @@ end
         gpu::GPU,
         walltime::Int64
     )
-        new(colonyname, executornames, executortype, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
+        new(colonyname, executornames, executortype, locationname, dependencies, nodes, cpu, processes, processespernode, mem, storage, gpu, walltime)
     end
 end
 
@@ -212,7 +214,7 @@ end
 @kwdef struct FunctionSpec
     nodename::String = ""
     funcname::String = ""
-    args::Union{Array{Any, 1}, Nothing} = [] 
+    args::Union{Array{Any, 1}, Nothing} = []
     kwargs::Dict{String, Any} = Dict{Any, Any}()
     priority::Int64 = 0
     maxwaittime::Int64 = 0
@@ -222,22 +224,24 @@ end
     label::String = ""
     fs::Filesystem = Filesystem()
     env::Dict{String, String} = Dict{Any, Any}()
+    channels::Union{Array{String, 1}, Nothing} = String[]
 
 	function FunctionSpec(
-		nodename::String, 
-		funcname::String, 
-		args::Union{Array{Any, 1}, Nothing}, 
-		kwargs::Dict{Any, Any}, 
-		priority::Int64, 
-		maxwaittime::Int64, 
-		maxexectime::Int64, 
-		maxretries::Int64, 
-		conditions::Conditions, 
-		label::String, 
-		fs::Filesystem, 
-		env::Dict{Any, Any}
+		nodename::String,
+		funcname::String,
+		args::Union{Array{Any, 1}, Nothing},
+		kwargs::Dict{Any, Any},
+		priority::Int64,
+		maxwaittime::Int64,
+		maxexectime::Int64,
+		maxretries::Int64,
+		conditions::Conditions,
+		label::String,
+		fs::Filesystem,
+		env::Dict{Any, Any},
+		channels::Union{Array{String, 1}, Nothing} = String[]
 	)
-		new(nodename, funcname, args, kwargs, priority, maxwaittime, maxexectime, maxretries, conditions, label, fs, env)
+		new(nodename, funcname, args, kwargs, priority, maxwaittime, maxexectime, maxretries, conditions, label, fs, env, channels)
 	end
 
     function FunctionSpec(
@@ -264,10 +268,11 @@ end
             conditions,
             label,
             Filesystem(),
-            Dict{String, String}(k => string(v) for (k, v) in env)
+            Dict{String, String}(k => string(v) for (k, v) in env),
+            String[]
         )
     end
-    
+
 	function FunctionSpec(
         nodename::String,
         funcname::String,
@@ -291,8 +296,9 @@ end
             conditions,
             label,
             Filesystem(),
-			Dict{String, String}())
-        
+			Dict{String, String}(),
+            String[]
+        )
     end
 end
 
@@ -317,7 +323,7 @@ end
 
 Base.@kwdef struct Process
     processid::String
-   	initiatorid::String 
+   	initiatorid::String
 	initiatorname::String
 	assignedexecutorid::String
     isassigned::Bool
@@ -335,8 +341,8 @@ Base.@kwdef struct Process
     parents::Union{Array{String,1},Nothing} = []
     children::Union{Array{String,1},Nothing} = []
     processgraphid::String = ""
-    in::Union{Array{String,1},Nothing} = []
-    out::Union{Array{String,1},Nothing} = []
+    in::Union{Array{Any,1},Nothing} = []
+    out::Union{Array{Any,1},Nothing} = []
     errors::Union{Array{String,1},Nothing} = []
 end
 
