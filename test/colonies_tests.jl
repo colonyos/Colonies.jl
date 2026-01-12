@@ -350,6 +350,123 @@ function test_setoutput()
 end
 
 # ============================================================================
+# Process Field Parsing Tests
+# ============================================================================
+
+function test_process_all_fields_parsed()
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, executor = create_test_executor(client, colonyname, colony_prvkey)
+
+    conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String["arg1", "arg2"], 1, -1, 300, 3, conditions, "test-label")
+    submitted = Colonies.submit(client, funcspec, executor_prvkey)
+
+    # Verify submitted process has basic fields
+    @assert length(submitted.processid) == 64
+    @assert submitted.state == Colonies.WAITING
+
+    # Assign and verify more fields
+    assigned = Colonies.assign(client, colonyname, 10, executor_prvkey)
+
+    # Check all fields are populated
+    @assert length(assigned.processid) == 64
+    @assert assigned.isassigned == true
+    @assert assigned.state == Colonies.RUNNING
+    @assert length(assigned.assignedexecutorid) == 64
+    @assert assigned.retries == 0
+    @assert assigned.submissiontime != ""
+    @assert assigned.starttime != ""
+
+    # Check spec is parsed
+    @assert haskey(assigned.spec, "funcname")
+    @assert assigned.spec["funcname"] == "test_func"
+    @assert assigned.spec["label"] == "test-label"
+
+    true
+end
+
+function test_process_input_output_fields()
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
+
+    conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    Colonies.submit(client, funcspec, executor_prvkey)
+
+    assigned = Colonies.assign(client, colonyname, 10, executor_prvkey)
+
+    # Set output with mixed types
+    Colonies.setoutput(client, assigned.processid, ["string_result", "123", "true"], executor_prvkey)
+
+    process = Colonies.getprocess(client, assigned.processid, executor_prvkey)
+
+    # Verify output is parsed
+    @assert length(process.output) == 3
+    @assert process.output[1] == "string_result"
+
+    # Verify input field exists (empty by default)
+    @assert process.input isa Vector
+
+    true
+end
+
+function test_process_parents_children()
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
+
+    # Create a workflow with parent-child relationship
+    conditions1 = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    spec1 = Colonies.FunctionSpec("parent_task", "func1", String[], 1, -1, -1, -1, conditions1, "")
+
+    conditions2 = Colonies.Conditions(colonyname, String[], "test_executor_type", ["parent_task"])
+    spec2 = Colonies.FunctionSpec("child_task", "func2", String[], 1, -1, -1, -1, conditions2, "")
+
+    workflow = Colonies.submitworkflow(client, colonyname, [spec1, spec2], executor_prvkey)
+
+    # Get the parent process
+    processes = Colonies.getprocesses(client, colonyname, Colonies.WAITING, 100, executor_prvkey)
+
+    # Find parent and child
+    parent_proc = nothing
+    for p in processes
+        if p.spec["nodename"] == "parent_task"
+            parent_proc = p
+            break
+        end
+    end
+
+    @assert parent_proc !== nothing
+    @assert parent_proc.processgraphid == workflow.processgraphid
+    @assert parent_proc.children isa Vector{String}
+    @assert length(parent_proc.children) == 1
+
+    true
+end
+
+function test_process_attributes_parsed()
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
+
+    conditions = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    funcspec = Colonies.FunctionSpec("test_proc", "test_func", String[], 1, -1, -1, -1, conditions, "")
+    Colonies.submit(client, funcspec, executor_prvkey)
+
+    assigned = Colonies.assign(client, colonyname, 10, executor_prvkey)
+
+    # Add an attribute
+    attribute = Colonies.Attribute(assigned.processid, colonyname, "test_key", "test_value")
+    Colonies.addattribute(client, attribute, executor_prvkey)
+
+    # Get process and verify attributes are parsed
+    process = Colonies.getprocess(client, assigned.processid, executor_prvkey)
+
+    @assert process.attributes isa Vector
+    @assert length(process.attributes) >= 1
+
+    true
+end
+
+# ============================================================================
 # Logging Tests
 # ============================================================================
 
@@ -522,6 +639,12 @@ end
         @test test_removeprocess()
         @test test_removeallprocesses()
         @test test_setoutput()
+
+        # Process field parsing tests
+        @test test_process_all_fields_parsed()
+        @test test_process_input_output_fields()
+        @test test_process_parents_children()
+        @test test_process_attributes_parsed()
 
         # Function tests
         @test test_addfunc()
