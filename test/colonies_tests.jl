@@ -466,6 +466,49 @@ function test_process_attributes_parsed()
     true
 end
 
+function test_process_input_from_parent_output()
+    # This test verifies that child process.input contains parent process.output
+    # This is how data flows through workflow DAGs in ColonyOS
+
+    colony_prvkey, colonyname = create_test_colony(client, server_prvkey)
+    executor_prvkey, _ = create_test_executor(client, colonyname, colony_prvkey)
+
+    # Create a workflow: parent_task -> child_task
+    conditions1 = Colonies.Conditions(colonyname, String[], "test_executor_type", String[])
+    parent_spec = Colonies.FunctionSpec("parent_task", "parent_func", String[], 1, -1, -1, -1, conditions1, "")
+
+    conditions2 = Colonies.Conditions(colonyname, String[], "test_executor_type", ["parent_task"])
+    child_spec = Colonies.FunctionSpec("child_task", "child_func", String[], 1, -1, -1, -1, conditions2, "")
+
+    workflow = Colonies.submitworkflow(client, colonyname, [parent_spec, child_spec], executor_prvkey)
+    @assert length(workflow.processgraphid) == 64
+
+    # Assign and complete the parent task with output
+    parent_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
+    @assert parent_process.spec["nodename"] == "parent_task"
+
+    # Set output on parent - this will become input for child
+    parent_output = ["result_from_parent", "value_42", "data_xyz"]
+    Colonies.setoutput(client, parent_process.processid, parent_output, executor_prvkey)
+    Colonies.closeprocess(client, parent_process.processid, executor_prvkey)
+
+    # Now assign the child task - it should have parent's output as its input
+    child_process = Colonies.assign(client, colonyname, 10, executor_prvkey)
+    @assert child_process.spec["nodename"] == "child_task"
+
+    # Verify child's input contains parent's output
+    @assert child_process.input isa Vector
+    @assert length(child_process.input) == 3
+    @assert child_process.input[1] == "result_from_parent"
+    @assert child_process.input[2] == "value_42"
+    @assert child_process.input[3] == "data_xyz"
+
+    # Clean up
+    Colonies.closeprocess(client, child_process.processid, executor_prvkey)
+
+    true
+end
+
 # ============================================================================
 # Logging Tests
 # ============================================================================
@@ -645,6 +688,7 @@ end
         @test test_process_input_output_fields()
         @test test_process_parents_children()
         @test test_process_attributes_parsed()
+        @test test_process_input_from_parent_output()
 
         # Function tests
         @test test_addfunc()
