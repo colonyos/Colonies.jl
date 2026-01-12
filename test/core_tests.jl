@@ -151,10 +151,14 @@ function test_processresult_struct()
         processid = "proc-123",
         state = Colonies.SUCCESS,
         spec = Dict{String, Any}("funcname" => "test"),
+        input = Any["input1", 123],
         output = Any["result1", 42],
         errors = Any[]
     )
-    result.processid == "proc-123" && result.state == Colonies.SUCCESS
+    result.processid == "proc-123" &&
+    result.state == Colonies.SUCCESS &&
+    result.input == Any["input1", 123] &&
+    result.output == Any["result1", 42]
 end
 
 # ============================================================================

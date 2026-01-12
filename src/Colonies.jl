@@ -136,13 +136,7 @@ end
 # Helper to parse process response into ProcessResult
 function parse_process_result(payload::String)
     dict = JSON.parse(payload)
-    result = ProcessResult()
-    result.processid = get(dict, "processid", "")
-    result.state = get(dict, "state", 0)
-    result.spec = get(dict, "spec", Dict{String, Any}())
-    result.output = get(dict, "out", [])
-    result.errors = get(dict, "errors", [])
-    result
+    parse_process_dict(dict)
 end
 
 function addchild(client::ColoniesClient, processgraphid::String, processid::String, spec::FunctionSpec, prvkey::String)
@@ -222,12 +216,29 @@ function getprocesses(client::ColoniesClient, colonyname::String, state::Int64, 
     [parse_process_dict(p) for p in arr]
 end
 
-# Helper to parse a single process dict
+# Helper to parse a single process dict into ProcessResult
 function parse_process_dict(dict::AbstractDict)
     result = ProcessResult()
     result.processid = get(dict, "processid", "")
+    result.initiatorid = get(dict, "initiatorid", "")
+    result.initiatorname = get(dict, "initiatorname", "")
+    result.assignedexecutorid = get(dict, "assignedexecutorid", "")
+    result.isassigned = get(dict, "isassigned", false)
     result.state = get(dict, "state", 0)
+    result.prioritytime = get(dict, "prioritytime", 0)
+    result.submissiontime = string(get(dict, "submissiontime", ""))
+    result.starttime = string(get(dict, "starttime", ""))
+    result.endtime = string(get(dict, "endtime", ""))
+    result.waitdeadline = string(get(dict, "waitdeadline", ""))
+    result.execdeadline = string(get(dict, "execdeadline", ""))
+    result.retries = get(dict, "retries", 0)
+    result.attributes = get(dict, "attributes", [])
     result.spec = get(dict, "spec", Dict{String, Any}())
+    result.waitforparents = get(dict, "waitforparents", false)
+    result.parents = convert(Vector{String}, get(dict, "parents", String[]))
+    result.children = convert(Vector{String}, get(dict, "children", String[]))
+    result.processgraphid = get(dict, "processgraphid", "")
+    result.input = get(dict, "in", [])
     result.output = get(dict, "out", [])
     result.errors = get(dict, "errors", [])
     result
